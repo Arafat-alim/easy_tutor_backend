@@ -8,6 +8,7 @@ const {
 } = require("../utils/hashing.js");
 const { generateToken } = require("../utils/jwtTokenUtility.js");
 const trimmer = require("../utils/trimmer.js");
+const sendEmail = require("../utils/sendMail.js");
 
 const signUpUser = async (userData) => {
   try {
@@ -22,6 +23,25 @@ const signUpUser = async (userData) => {
     };
 
     const user = await Auth.create(prepareData);
+    console.log("your_output", user[0]);
+    if (user[0] === 0) {
+      const emailOptions = {
+        to: email,
+        subject: `Welcome! ${username}`,
+        username: "JohnDoe",
+        headerText: "Welcome!",
+        bodyText:
+          "Thank you for registering! Please verify your email to access more features.",
+        actionText: "Visit Dashboard",
+        actionUrl: "https://dev-arafat.netlify.app/",
+        footerText: "We're excited to have you on board!",
+        verificationCode: null,
+      };
+
+      sendEmail(emailOptions)
+        .then(() => console.log("Email sent successfully"))
+        .catch((err) => console.error("Failed to send email:", err));
+    }
 
     return { email, mobile };
   } catch (err) {
