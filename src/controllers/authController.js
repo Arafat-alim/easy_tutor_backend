@@ -7,6 +7,7 @@ const {
   validateEmail,
   validateEmailAndMobile,
   validateOtpEmailAndMobile,
+  validateEmailAndOtp,
 } = require("../validators/authValidators.js");
 const {
   signUpUser,
@@ -19,6 +20,7 @@ const {
   verifyProfileByEmail,
   sendEmailVerificationCodeService,
   sendForgotPasswordCodeViaEmailService,
+  verifyEmailService,
 } = require("../services/authService.js");
 const { hideMobileNumber } = require("../utils/hideMobileNumber.js");
 const { findByEmail } = require("../models/Auth.js");
@@ -368,19 +370,8 @@ const handleSendEmailVerificationCode = async (req, res) => {
         error: error?.details.map((err) => err.message),
       });
     }
-    const emailId = req.body.email.trim();
 
-    const user = await findByEmail(emailId);
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-        error: "Failed to send the email verification code",
-      });
-    }
-
-    await sendEmailVerificationCodeService(emailId);
+    await sendEmailVerificationCodeService(req.body);
 
     return res.status(200).json({
       success: true,
@@ -392,6 +383,31 @@ const handleSendEmailVerificationCode = async (req, res) => {
       success: false,
       message:
         "Failed to send email verification code. Please try again later!",
+      error: err.message,
+    });
+  }
+};
+
+const handleVerifyEmailVerificaitonCode = async (req, res) => {
+  try {
+    const { error } = await validateEmailAndOtp(req.body);
+    if (error?.details) {
+      return res.status(400).json({
+        success: false,
+        message: "Validation Error!",
+        error: error.details.map((err) => err.message),
+      });
+    }
+
+    await verifyEmailService(req.body);
+    return res.status(200).json({
+      success: true,
+      message: "Email is verified!",
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to Verify your email address, please try again later",
       error: err.message,
     });
   }
@@ -409,4 +425,5 @@ module.exports = {
   handleVerifyMobileVerificaitonCode,
   handleUserProfile,
   handleSendEmailVerificationCode,
+  handleVerifyEmailVerificaitonCode,
 };

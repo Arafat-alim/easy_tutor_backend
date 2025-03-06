@@ -95,6 +95,19 @@ class Auth {
         email_verification_code_validation: Date.now(),
       });
   }
+
+  static async findByEmailAndVerify(email) {
+    return db("users")
+      .where({
+        email,
+        deleted_user: 0,
+      })
+      .update({
+        email_verified: 1,
+        email_verification_code: null,
+        email_verification_code_validation: null,
+      });
+  }
 }
 
 module.exports = Auth;

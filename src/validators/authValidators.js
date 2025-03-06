@@ -193,6 +193,29 @@ const validateEmailAndMobile = (data) => {
   return validateEmailAndMobileSchema.validate(data, { abortEarly: false });
 };
 
+const validateEmailAndOtpSchema = Joi.object({
+  email: Joi.string().trim().email().required().messages({
+    "string.email": "Email must be a valid email address",
+    "any.required": "Email is required",
+  }),
+  otp: Joi.string()
+    .trim()
+    .required()
+    .length(6)
+    .pattern(/^[0-9]+$/)
+    .messages({
+      //6-digit numeric OTP
+      "string.empty": "OTP is required",
+      "string.length": "OTP must be 6 digits long",
+      "string.pattern.base": "OTP must be numeric",
+      "any.required": "OTP is required",
+    }),
+});
+
+const validateEmailAndOtp = (data) => {
+  return validateEmailAndOtpSchema.validate(data, { abortEarly: false });
+};
+
 module.exports = {
   validateSignup,
   validateSignIn,
@@ -204,4 +227,5 @@ module.exports = {
   validateOtpEmailAndMobile,
   validateEmail,
   validateEmailAndMobile,
+  validateEmailAndOtp,
 };

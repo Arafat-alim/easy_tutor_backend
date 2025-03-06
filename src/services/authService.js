@@ -310,8 +310,8 @@ const sendMobileVerificationCodeService = async (userData) => {
 const validateMobileVerificationCodeService = async (userData) => {
   const trimmedObj = trimmer(userData);
   const { mobile, otp, email } = trimmedObj;
+  let error;
   try {
-    let error;
     const user = await Auth.findByEmail(email);
     if (!user) {
       error = new Error("User not found");
@@ -384,13 +384,20 @@ const verifyProfileByEmail = async (userData) => {
 };
 
 const sendEmailVerificationCodeService = async (userData) => {
+  const trimmedObj = trimmer(userData);
+  const { email } = trimmedObj;
   let error;
   try {
-    console.log("test email", userData);
-    const user = await Auth.findByEmail(userData);
+    const user = await Auth.findByEmail(email);
     if (!user) {
       error = new Error("User not Found!");
       error.status = 404;
+      throw error;
+    }
+
+    if (user.email_verified) {
+      error = new Error("Email is verified");
+      error.status = 400;
       throw error;
     }
 
@@ -408,7 +415,7 @@ const sendEmailVerificationCodeService = async (userData) => {
 
       if (updatedCount === 0) {
         error = new Error(
-          "Unexpected error: Failed to update user with code. User not found or update failed"
+          "Unexpected error: Failed to send email verification code"
         );
         error.status = 400;
         throw error;
@@ -432,6 +439,69 @@ const sendEmailVerificationCodeService = async (userData) => {
   }
 };
 
+const verifyEmailService = async (userData) => {
+  const trimmedObj = trimmer(userData);
+  const { email, otp } = trimmedObj;
+  let error;
+  try {
+    const user = await Auth.findByEmail(email);
+    if (!user) {
+      error = new Error("User not found");
+      error.status = 404;
+      throw error;
+    }
+
+    const timeLimit = process.env.TIME_LIMIT || 15;
+    if (
+      Date.now() - user.email_verification_code_validation >
+      timeLimit * 60 * 1000
+    ) {
+      error = new Error("OTP Expired");
+      error.status = 410;
+      throw error;
+    }
+
+    if (
+      !user.email_verification_code ||
+      !user.email_verification_code_validation
+    ) {
+      error = new Error(
+        "Something went wrong with the email verification code or email verification code validation"
+      );
+      error.status = 403;
+      throw error;
+    }
+    const hashedCode = await hmacProcess(otp, process.env.JWT_SECRET);
+
+    if (hashedCode === user.email_verification_code) {
+      const response = await Auth.findByEmailAndVerify(user.email);
+
+      if (!response) {
+        error = new Error("Something went wrong while verifying the email");
+        error.status = 400;
+        throw error;
+      }
+      const emailOptions = {
+        to: user.email,
+        subject: "Email Verified - Welcome to Easy Tutor",
+        username: user.username,
+        headerText: "Verification Successful!",
+        bodyText: `Thank you for verifying your email, ${user.username}! You can now enjoy all the features and services of [Your App/Website Name].`,
+        footerText: "We're glad to have you on board!",
+      };
+
+      await sendEmail(emailOptions);
+      return true;
+    } else {
+      error = new Error("Invalid Code");
+      error.status = 403;
+      throw error;
+    }
+  } catch (err) {
+    throw err;
+  }
+};
+
 module.exports = {
   signUpUser,
   signInUser,
@@ -443,4 +513,5 @@ module.exports = {
   verifyProfileByEmail,
   sendEmailVerificationCodeService,
   sendForgotPasswordCodeViaEmailService,
+  verifyEmailService,
 };

@@ -10,6 +10,7 @@ const {
   handleUserProfile,
   handleSendEmailVerificationCode,
   handleSendForgotPasswordCodeViaEmail,
+  handleVerifyEmailVerificaitonCode,
 } = require("../controllers/authController.js");
 const authMiddleware = require("../middlewares/authMiddleware.js");
 
@@ -33,11 +34,13 @@ authRouter.post(
 );
 
 authRouter.post("/email/verification-code", handleSendEmailVerificationCode);
-// authRouter.post("/email/verification", handleVerifyEmailVerificaitonCode);
+authRouter.post("/email/verification", handleVerifyEmailVerificaitonCode);
 
 authRouter.patch("/update-role", authMiddleware, handleUpdateUserRole);
 
 authRouter.post("/password/reset-code", handleSendForgotPasswordCodeViaEmail);
 authRouter.patch("/password/reset", handleVerifyForgotPasswordCode);
+
+// authRouter.patch("/update-username", authMiddleware, handleUpdateUsername)
 
 module.exports = authRouter;
