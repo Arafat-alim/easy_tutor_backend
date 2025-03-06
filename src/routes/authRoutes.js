@@ -23,13 +23,21 @@ authRouter.get("/logout", handleSignOut);
 authRouter.get("/profile", authMiddleware, handleUserProfile);
 
 // authRouter.patch("/add-mobile", handleUpdateMobile);
-authRouter.post("/mobile/verification-code", handleSendMobileVerificationCode);
-authRouter.post("/mobile/verification", handleVerifyMobileVerificaitonCode);
+authRouter.post(
+  "/mobile/verification-code",
+  authMiddleware,
+  handleSendMobileVerificationCode
+);
+authRouter.post(
+  "/mobile/verification",
+  authMiddleware,
+  handleVerifyMobileVerificaitonCode
+);
 
 authRouter.post("/email/verification-code", handleSendEmailVerificationCode);
 // authRouter.post("/email/verification", handleVerifyEmailVerificaitonCode);
 
-authRouter.patch("/update-role", handleUpdateUserRole);
+authRouter.patch("/update-role", authMiddleware, handleUpdateUserRole);
 
 authRouter.post("/password/reset-code", handleSendForgotPasswordCode);
 authRouter.patch("/password/reset", handleVerifyForgotPasswordCode);

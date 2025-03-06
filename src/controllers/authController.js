@@ -8,6 +8,7 @@ const {
   validateSendMobileVerificationCode,
   validateOtpAndMobile,
   validateEmail,
+  validateEmailAndMobile,
 } = require("../validators/authValidators.js");
 const {
   signUpUser,
@@ -154,7 +155,6 @@ const handleUpdateMobile = async (req, res) => {
 //! handle add role
 
 const handleUpdateUserRole = async (req, res) => {
-  console.log("Called");
   try {
     const { error } = validateAddUserRole(req.body);
     if (error?.details) {
@@ -248,8 +248,18 @@ const handleVerifyForgotPasswordCode = async (req, res) => {
 //! handle send mobile verification code
 
 const handleSendMobileVerificationCode = async (req, res) => {
+  const email = req.user.email;
+  const mobile = req.body?.mobile;
+
   try {
-    const { error } = await validateSendMobileVerificationCode(req.body);
+    if (!mobile) {
+      return res.status(400).json({
+        success: false,
+        message: "Mobile number not found",
+      });
+    }
+    const { error } = await validateEmailAndMobile({ email, mobile });
+
     if (error?.details) {
       return res.status(400).json({
         success: false,
@@ -258,7 +268,7 @@ const handleSendMobileVerificationCode = async (req, res) => {
       });
     }
 
-    await sendMobileVerificationCodeService(req.body);
+    await sendMobileVerificationCodeService({ email, mobile });
     return res.status(200).json({
       success: true,
       message: `Mobile Verification code sent to ${req.body.mobile}`,

@@ -185,6 +185,22 @@ const validateEmail = (data) => {
   return validateEmailSchema.validate(data, { abortEarly: false });
 };
 
+const validateEmailAndMobileSchema = Joi.object({
+  email: Joi.string().trim().email().required().messages({
+    "string.email": "Email must be a valid email address",
+    "any.required": "Email is required",
+  }),
+  mobile: Joi.string().trim().length(10).pattern(/^\d+$/).required().messages({
+    "string.length": "User input Mobile number must be exactly 10 digits",
+    "string.pattern.base": "User input Mobile number must contain only digits",
+    "any.required": "User input Mobile number is required",
+  }),
+});
+
+const validateEmailAndMobile = (data) => {
+  return validateEmailAndMobileSchema.validate(data, { abortEarly: false });
+};
+
 module.exports = {
   validateSignup,
   validateSignIn,
@@ -195,4 +211,5 @@ module.exports = {
   validateSendMobileVerificationCode,
   validateOtpAndMobile,
   validateEmail,
+  validateEmailAndMobile,
 };

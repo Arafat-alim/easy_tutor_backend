@@ -9,6 +9,7 @@ const {
 const { generateToken } = require("../utils/jwtTokenUtility.js");
 const trimmer = require("../utils/trimmer.js");
 const sendEmail = require("../utils/sendMail.js");
+const { sendSMS } = require("../utils/sendSMS.js");
 
 const signUpUser = async (userData) => {
   try {
@@ -256,31 +257,23 @@ const verifyForgotPasswordCodeService = async (userData) => {
 };
 
 const sendMobileVerificationCodeService = async (userData) => {
-  const { mobile } = userData;
+  const { mobile, email } = userData;
   const enteredMobile = mobile.trim();
+  const emailId = email.trim();
   let error;
   try {
-    const user = await Auth.findByMobile(enteredMobile);
+    const user = await Auth.findByEmail(emailId);
     if (!user) {
       error = new Error("User not found");
       error.status = 404;
       throw error;
     }
+
     const codeValue = await generateOtpCode(6);
     console.log("codeValue__", codeValue);
     //! send codeValue to mobile
     //! write your sending code value...
-    // Send `codeValue` to mobile using a reliable method (e.g., Twilio, Nexmo, SNS)
-    // const sendSmsResult = await sendSms(
-    //   mobile,
-    //   `Your forgot password code is: ${codeValue}`
-    // ); //Replace with your actual SMS sending logic
-
-    // if (!sendSmsResult.success) {
-    //   Check for sms sending failures. Replace with actual error check based on your sms api
-    //   console.error("Failed to send SMS:", sendSmsResult.error);
-    //   throw new Error("Failed to send code. Please try again later."); //Generic error for sending failure.
-    // }
+    await sendSMS(mobile, codeValue);
     if (user.mobile) {
       const hashedCodeValue = await hmacProcess(
         codeValue,
