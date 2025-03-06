@@ -37,6 +37,7 @@ const handleSignUp = async (req, res) => {
         error: error.details.map((err) => err.message),
       });
     }
+
     const data = await signUpUser(req.body);
 
     return res.status(201).json({
@@ -45,7 +46,28 @@ const handleSignUp = async (req, res) => {
       data,
     });
   } catch (err) {
-    console.error("Failed to signup: ", err);
+    console.error("Failed to signup:", err);
+
+    if (err.code === "ER_DUP_ENTRY") {
+      const { email, mobile } = req.body;
+
+      let errorMessage = "Duplicate entry detected: ";
+
+      if (err.sqlMessage?.includes(email)) {
+        errorMessage += "Email is already registered.";
+      } else if (err.sqlMessage?.includes(mobile)) {
+        errorMessage += "Mobile number is already registered.";
+      } else {
+        errorMessage =
+          "The email address or mobile number you entered is already registered with us.";
+      }
+
+      return res.status(409).json({
+        // Use 409 Conflict status code
+        success: false,
+        message: errorMessage,
+      });
+    }
 
     return res.status(500).json({
       success: false,

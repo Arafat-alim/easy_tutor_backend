@@ -24,7 +24,6 @@ const signUpUser = async (userData) => {
     };
 
     const user = await Auth.create(prepareData);
-    console.log("your_output", user[0]);
     if (user[0] === 0) {
       const emailOptions = {
         to: email,
@@ -48,12 +47,10 @@ const signUpUser = async (userData) => {
   } catch (err) {
     console.error("Error in signUpUser:", err);
 
-    // Handle specific errors
     if (err.code === "ER_DUP_ENTRY") {
-      throw new Error(err.sqlMessage);
+      throw err;
     }
 
-    // Rethrow the error for the controller to handle
     throw err;
   }
 };
