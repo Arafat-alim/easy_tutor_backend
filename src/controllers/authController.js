@@ -19,6 +19,7 @@ const {
   sendMobileVerificationCodeService,
   validateMobileVerificationCodeService,
   verifyProfileByEmail,
+  sendEmailVerificationCodeService,
 } = require("../services/authService.js");
 const { findByEmail } = require("../models/Auth.js");
 
@@ -153,6 +154,7 @@ const handleUpdateMobile = async (req, res) => {
 //! handle add role
 
 const handleUpdateUserRole = async (req, res) => {
+  console.log("Called");
   try {
     const { error } = validateAddUserRole(req.body);
     if (error?.details) {
@@ -167,8 +169,7 @@ const handleUpdateUserRole = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: "User role added.",
-      data: "Success bro",
+      message: "Role successfully updated!",
     });
   } catch (err) {
     console.error("Failed to add user role: ", err);
@@ -340,6 +341,34 @@ const handleUserProfile = async (req, res) => {
   }
 };
 
+const handleSendEmailVerificationCode = async (req, res) => {
+  try {
+    const { error } = await validateEmail(req.body);
+    if (error?.details) {
+      return res.status(400).json({
+        success: false,
+        message: "validation Error!",
+        error: error?.details.map((err) => err.message),
+      });
+    }
+
+    const user = await sendEmailVerificationCodeService(req.body);
+
+    return res.status(200).json({
+      success: true,
+      message: `Email Verification code sent to ${req.body}`,
+    });
+  } catch (err) {
+    console.error("failed to send email verification code: ", err);
+    return res.status(500).json({
+      success: false,
+      message:
+        "Failed to send email verification code. Please try again later!",
+      error: err.message,
+    });
+  }
+};
+
 module.exports = {
   handleSignUp,
   handleSignIn,
@@ -351,4 +380,5 @@ module.exports = {
   handleSendMobileVerificationCode,
   handleVerifyMobileVerificaitonCode,
   handleUserProfile,
+  handleSendEmailVerificationCode,
 };

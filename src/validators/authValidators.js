@@ -60,10 +60,9 @@ const validateAddMobile = (data) => {
 
 //! add user role
 const addUserRoleSchema = Joi.object({
-  mobile: Joi.string().trim().length(10).pattern(/^\d+$/).required().messages({
-    "string.length": "Mobile number must be exactly 10 digits",
-    "string.pattern.base": "Mobile number must contain only digits",
-    "any.required": "Mobile number is required",
+  email: Joi.string().trim().email().required().messages({
+    "string.email": "Email must be a valid email address",
+    "any.required": "Email is required",
   }),
   role: Joi.string()
     .valid("admin", "teacher", "institute", "student") //Enum validation for role

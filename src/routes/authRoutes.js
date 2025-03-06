@@ -11,6 +11,7 @@ const {
   validateMobileVerificationCode,
   handleVerifyMobileVerificaitonCode,
   handleUserProfile,
+  handleSendEmailVerificationCode,
 } = require("../controllers/authController.js");
 const authMiddleware = require("../middlewares/authMiddleware.js");
 
@@ -25,7 +26,10 @@ authRouter.get("/profile", authMiddleware, handleUserProfile);
 authRouter.post("/mobile/verification-code", handleSendMobileVerificationCode);
 authRouter.post("/mobile/verification", handleVerifyMobileVerificaitonCode);
 
-authRouter.patch("/update-role", handleUpdateUserRole); // admin roles
+authRouter.post("/email/verification-code", handleSendEmailVerificationCode);
+// authRouter.post("/email/verification", handleVerifyEmailVerificaitonCode);
+
+authRouter.patch("/update-role", handleUpdateUserRole);
 
 authRouter.post("/password/reset-code", handleSendForgotPasswordCode);
 authRouter.patch("/password/reset", handleVerifyForgotPasswordCode);

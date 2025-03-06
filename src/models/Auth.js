@@ -21,6 +21,15 @@ class Auth {
       .update({ role });
   }
 
+  static async findByEmailAndUpdateRole(email, role) {
+    return db("users")
+      .where({
+        email,
+        deleted_user: 0,
+      })
+      .update({ role });
+  }
+
   static async findByEmailAndUpdateMobile(email, mobile) {
     return db("users")
       .where({

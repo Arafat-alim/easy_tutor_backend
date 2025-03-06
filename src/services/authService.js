@@ -136,14 +136,20 @@ const updateMobileUser = async (userData) => {
 };
 
 const updateUserRole = async (userData) => {
-  const { mobile, role } = userData;
+  let error;
+  const { email, role } = userData;
   try {
-    const updatedUserCount = await Auth.findByMobileAndUpdateRole(mobile, role);
+    const updatedUserCount = await Auth.findByEmailAndUpdateRole(email, role);
 
     if (updatedUserCount === 0) {
-      throw new Error("User not found for update");
+      error = new Error("User not found for update");
+      error.status = 404;
+      throw error;
     }
-    return { mobile, role };
+    return {
+      email,
+      role,
+    };
   } catch (err) {
     console.error("Failed to add user role: ", err);
     throw err;
@@ -367,6 +373,26 @@ const verifyProfileByEmail = async (userData) => {
   }
 };
 
+const sendEmailVerificationCodeService = async (userData) => {
+  let error;
+  try {
+    const { email } = userData;
+    console.log("test email", email);
+    const user = await Auth.findByEmailAndGetSelectiveFields(email);
+
+    if (!user) {
+      error = new Error("User not Found!");
+      error.status = 404;
+      throw error;
+    }
+
+    const codeValue = await generateOtpCode(6);
+    //! hash code
+  } catch (err) {
+    throw err;
+  }
+};
+
 module.exports = {
   signUpUser,
   signInUser,
@@ -377,4 +403,5 @@ module.exports = {
   sendMobileVerificationCodeService,
   validateMobileVerificationCodeService,
   verifyProfileByEmail,
+  sendEmailVerificationCodeService,
 };
