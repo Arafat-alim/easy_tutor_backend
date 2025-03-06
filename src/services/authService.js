@@ -486,7 +486,7 @@ const verifyEmailService = async (userData) => {
         subject: "Email Verified - Welcome to Easy Tutor",
         username: user.username,
         headerText: "Verification Successful!",
-        bodyText: `Thank you for verifying your email, ${user.username}! You can now enjoy all the features and services of [Your App/Website Name].`,
+        bodyText: `Thank you for verifying your email, ${user.username}! You can now enjoy all the features and services of Easy Tutor.`,
         footerText: "We're glad to have you on board!",
       };
 
