@@ -157,41 +157,27 @@ const updateUserRole = async (userData) => {
   }
 };
 
-const sendAndAddForgotPasswordCodeService = async (userData) => {
-  const { mobile } = userData;
+const sendForgotPasswordCodeViaEmailService = async (userData) => {
+  const { email } = userData;
+  const emailId = email.trim();
   let error;
   try {
-    const user = await Auth.findByMobile(mobile);
+    const user = await Auth.findByEmail(emailId);
     if (!user) {
       error = new Error("User not found!");
       error.status = 404;
       throw error;
     }
 
-    const codeValue = generateOtpCode(6);
-    console.log("codeValue__", codeValue);
-    //! send codeValue to mobile
-    //! write your sending code value...
-    // Send `codeValue` to mobile using a reliable method (e.g., Twilio, Nexmo, SNS)
-    // const sendSmsResult = await sendSms(
-    //   mobile,
-    //   `Your forgot password code is: ${codeValue}`
-    // ); //Replace with your actual SMS sending logic
-
-    // if (!sendSmsResult.success) {
-    //   Check for sms sending failures. Replace with actual error check based on your sms api
-    //   console.error("Failed to send SMS:", sendSmsResult.error);
-    //   throw new Error("Failed to send code. Please try again later."); //Generic error for sending failure.
-    // }
-
-    if (user.mobile) {
+    if (user.email) {
+      const codeValue = generateOtpCode(6);
       const hashedCodeValue = await hmacProcess(
         codeValue,
         process.env.JWT_SECRET
       );
       //! save code value to users_otp table and users table
-      const updatedCount = await Auth.findByMobileAndUpdateForgotPasswordCode(
-        user.mobile,
+      const updatedCount = await Auth.findByEmailAndUpdateForgotPasswordCode(
+        user.email,
         hashedCodeValue
       );
       if (updatedCount === 0) {
@@ -199,6 +185,20 @@ const sendAndAddForgotPasswordCodeService = async (userData) => {
           "Unexpected error: Failed to update user with code. User not found or update failed"
         );
       }
+      //! sending codes via email
+      const emailOptions = {
+        to: user.email,
+        subject: `Hi ${user.username}, Your Forgot Password code is here`,
+        username: user.username,
+        headerText: "Forgot Password Code",
+        bodyText: `You have requested a password reset. Please enter the below code to reset your password. This code will expire in 15 mins.`,
+        actionText: "Visit Dashboard",
+        actionUrl: "https://dev-arafat.netlify.app/",
+        footerText: "We're excited to have you on board!",
+        verificationCode: codeValue,
+      };
+
+      await sendEmail(emailOptions);
     }
     return true;
   } catch (err) {
@@ -390,10 +390,10 @@ module.exports = {
   signInUser,
   updateMobileUser,
   updateUserRole,
-  sendAndAddForgotPasswordCodeService,
   verifyForgotPasswordCodeService,
   sendMobileVerificationCodeService,
   validateMobileVerificationCodeService,
   verifyProfileByEmail,
   sendEmailVerificationCodeService,
+  sendForgotPasswordCodeViaEmailService,
 };

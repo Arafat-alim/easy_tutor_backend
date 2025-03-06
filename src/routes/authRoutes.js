@@ -3,15 +3,13 @@ const {
   handleSignIn,
   handleSignOut,
   handleSignUp,
-  handleUpdateMobile,
   handleUpdateUserRole,
-  handleSendForgotPasswordCode,
   handleVerifyForgotPasswordCode,
   handleSendMobileVerificationCode,
-  validateMobileVerificationCode,
   handleVerifyMobileVerificaitonCode,
   handleUserProfile,
   handleSendEmailVerificationCode,
+  handleSendForgotPasswordCodeViaEmail,
 } = require("../controllers/authController.js");
 const authMiddleware = require("../middlewares/authMiddleware.js");
 
@@ -39,7 +37,7 @@ authRouter.post("/email/verification-code", handleSendEmailVerificationCode);
 
 authRouter.patch("/update-role", authMiddleware, handleUpdateUserRole);
 
-authRouter.post("/password/reset-code", handleSendForgotPasswordCode);
+authRouter.post("/password/reset-code", handleSendForgotPasswordCodeViaEmail);
 authRouter.patch("/password/reset", handleVerifyForgotPasswordCode);
 
 module.exports = authRouter;

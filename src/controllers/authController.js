@@ -3,7 +3,6 @@ const {
   validateSignIn,
   validateAddMobile,
   validateAddUserRole,
-  validateSendForgotPasswordCode,
   validateVerifyPasswordCode,
   validateEmail,
   validateEmailAndMobile,
@@ -14,12 +13,12 @@ const {
   signInUser,
   updateMobileUser,
   updateUserRole,
-  sendAndAddForgotPasswordCodeService,
   verifyForgotPasswordCodeService,
   sendMobileVerificationCodeService,
   validateMobileVerificationCodeService,
   verifyProfileByEmail,
   sendEmailVerificationCodeService,
+  sendForgotPasswordCodeViaEmailService,
 } = require("../services/authService.js");
 const { hideMobileNumber } = require("../utils/hideMobileNumber.js");
 
@@ -181,22 +180,22 @@ const handleUpdateUserRole = async (req, res) => {
 };
 
 //! forgot password
-const handleSendForgotPasswordCode = async (req, res) => {
+const handleSendForgotPasswordCodeViaEmail = async (req, res) => {
   try {
-    const { error } = validateSendForgotPasswordCode(req.body);
+    const { error } = validateEmail(req.body);
     if (error?.details) {
       return res.status(400).json({
         success: false,
-        message: "Failed to send Forgot password code.",
+        message: "Validation Error!",
         error: error?.details.map((err) => err.message),
       });
     }
 
-    await sendAndAddForgotPasswordCodeService(req.body);
+    await sendForgotPasswordCodeViaEmailService(req.body);
 
     return res.status(200).json({
       success: true,
-      message: `Forgot password code has been sent to your given mobile number - ${req.body.mobile}`,
+      message: `We've sent a password reset code to your email id. Please enter it to reset your password - ${req.body.email}`,
     });
   } catch (err) {
     console.error("Failed to send forgot password code: ", err);
@@ -392,7 +391,7 @@ module.exports = {
   handleSignOut,
   handleUpdateMobile,
   handleUpdateUserRole,
-  handleSendForgotPasswordCode,
+  handleSendForgotPasswordCodeViaEmail,
   handleVerifyForgotPasswordCode,
   handleSendMobileVerificationCode,
   handleVerifyMobileVerificaitonCode,
