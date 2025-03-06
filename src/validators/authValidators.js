@@ -137,24 +137,16 @@ const validateSendMobileVerificationCode = (data) => {
   return sendMobileVerificationCodeSchema.validate(data, { abortEarly: false });
 };
 
-const validateOtpMobileSchema = Joi.object({
+const validateOtpEmailAndMobileSchema = Joi.object({
+  email: Joi.string().trim().email().required().messages({
+    "string.email": "Email must be a valid email address",
+    "any.required": "Email is required",
+  }),
   mobile: Joi.string().trim().length(10).pattern(/^\d+$/).required().messages({
     "string.length": "Mobile number must be exactly 10 digits",
     "string.pattern.base": "Mobile number must contain only digits",
     "any.required": "Mobile number is required",
   }),
-
-  enteredMobile: Joi.string()
-    .trim()
-    .length(10)
-    .pattern(/^\d+$/)
-    .required()
-    .messages({
-      "string.length": "User input Mobile number must be exactly 10 digits",
-      "string.pattern.base":
-        "User input Mobile number must contain only digits",
-      "any.required": "User input Mobile number is required",
-    }),
 
   otp: Joi.string()
     .trim()
@@ -170,8 +162,8 @@ const validateOtpMobileSchema = Joi.object({
     }),
 });
 
-const validateOtpAndMobile = (data) => {
-  return validateOtpMobileSchema.validate(data, { abortEarly: false });
+const validateOtpEmailAndMobile = (data) => {
+  return validateOtpEmailAndMobileSchema.validate(data, { abortEarly: false });
 };
 
 const validateEmailSchema = Joi.object({
@@ -209,7 +201,7 @@ module.exports = {
   validateSendForgotPasswordCode,
   validateVerifyPasswordCode,
   validateSendMobileVerificationCode,
-  validateOtpAndMobile,
+  validateOtpEmailAndMobile,
   validateEmail,
   validateEmailAndMobile,
 };

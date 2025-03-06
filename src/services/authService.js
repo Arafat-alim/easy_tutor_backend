@@ -270,11 +270,8 @@ const sendMobileVerificationCodeService = async (userData) => {
     }
 
     const codeValue = await generateOtpCode(6);
-    console.log("codeValue__", codeValue);
-    //! send codeValue to mobile
-    //! write your sending code value...
-    await sendSMS(mobile, codeValue);
     if (user.mobile) {
+      await sendSMS(enteredMobile, codeValue);
       const hashedCodeValue = await hmacProcess(
         codeValue,
         process.env.JWT_SECRET
@@ -298,10 +295,10 @@ const sendMobileVerificationCodeService = async (userData) => {
 
 const validateMobileVerificationCodeService = async (userData) => {
   const trimmedObj = trimmer(userData);
-  const { mobile, otp, enteredMobile } = trimmedObj;
+  const { mobile, otp, email } = trimmedObj;
   try {
     let error;
-    const user = await Auth.findByMobile(mobile);
+    const user = await Auth.findByEmail(email);
     if (!user) {
       error = new Error("User not found");
       error.status = 404;
@@ -310,6 +307,12 @@ const validateMobileVerificationCodeService = async (userData) => {
     if (Date.now() - user.mobile_verification_code_validation > 5 * 60 * 1000) {
       error = new Error("OTP Expired");
       error.status = 410;
+      throw error;
+    }
+
+    if (user.mobile !== mobile) {
+      error = new Error("Mobile number does not matched");
+      error.status = 400;
       throw error;
     }
 
@@ -326,11 +329,7 @@ const validateMobileVerificationCodeService = async (userData) => {
     const hashedCode = await hmacProcess(otp, process.env.JWT_SECRET);
 
     if (hashedCode === user.mobile_verification_code) {
-      const response = await Auth.findByMobileAndUpdateMobile(
-        user.mobile,
-        enteredMobile
-      );
-      console.log("res", response);
+      const response = await Auth.findByEmailAndVerifyOTP(user.mobile);
       if (!response) {
         error = new Error(
           "Something went wrong while changing the new password"

@@ -5,10 +5,9 @@ const {
   validateAddUserRole,
   validateSendForgotPasswordCode,
   validateVerifyPasswordCode,
-  validateSendMobileVerificationCode,
-  validateOtpAndMobile,
   validateEmail,
   validateEmailAndMobile,
+  validateOtpEmailAndMobile,
 } = require("../validators/authValidators.js");
 const {
   signUpUser,
@@ -22,7 +21,7 @@ const {
   verifyProfileByEmail,
   sendEmailVerificationCodeService,
 } = require("../services/authService.js");
-const { findByEmail } = require("../models/Auth.js");
+const { hideMobileNumber } = require("../utils/hideMobileNumber.js");
 
 //! handle Signup
 const handleSignUp = async (req, res) => {
@@ -269,9 +268,10 @@ const handleSendMobileVerificationCode = async (req, res) => {
     }
 
     await sendMobileVerificationCodeService({ email, mobile });
+    const mobileNumber = hideMobileNumber(req.body.mobile);
     return res.status(200).json({
       success: true,
-      message: `Mobile Verification code sent to ${req.body.mobile}`,
+      message: `Mobile Verification code sent to +91${mobileNumber}`,
     });
   } catch (err) {
     console.error("Failed to send mobile verification code: ", err);
@@ -291,8 +291,15 @@ const handleSendMobileVerificationCode = async (req, res) => {
 };
 
 const handleVerifyMobileVerificaitonCode = async (req, res) => {
+  const { email } = req.user;
+  const { mobile, otp } = req.body;
+  const prepareData = {
+    email,
+    mobile,
+    otp,
+  };
   try {
-    const { error } = await validateOtpAndMobile(req.body);
+    const { error } = await validateOtpEmailAndMobile(prepareData);
 
     if (error?.details) {
       return res.status(400).json({
@@ -301,10 +308,10 @@ const handleVerifyMobileVerificaitonCode = async (req, res) => {
         error: error?.details.map((err) => err.message),
       });
     }
-    await validateMobileVerificationCodeService(req.body);
+    await validateMobileVerificationCodeService(prepareData);
     return res.status(200).json({
       success: true,
-      message: "Mobile number updated!",
+      message: "Mobile number verified!",
     });
   } catch (err) {
     console.error("Failed to verify the mobile verification code", err);

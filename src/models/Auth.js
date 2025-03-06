@@ -62,9 +62,8 @@ class Auth {
     });
   }
 
-  static async findByMobileAndUpdateMobile(oldMobile, newMobile) {
-    return db("users").where({ mobile: oldMobile, deleted_user: 0 }).update({
-      mobile: newMobile,
+  static async findByEmailAndVerifyOTP(mobile) {
+    return db("users").where({ mobile, deleted_user: 0 }).update({
       mobile_verified: 1,
       mobile_verification_code: null,
       mobile_verification_code_validation: null,
