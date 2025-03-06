@@ -21,6 +21,7 @@ const {
   sendForgotPasswordCodeViaEmailService,
 } = require("../services/authService.js");
 const { hideMobileNumber } = require("../utils/hideMobileNumber.js");
+const { findByEmail } = require("../models/Auth.js");
 
 //! handle Signup
 const handleSignUp = async (req, res) => {
@@ -367,12 +368,23 @@ const handleSendEmailVerificationCode = async (req, res) => {
         error: error?.details.map((err) => err.message),
       });
     }
+    const emailId = req.body.email.trim();
 
-    const user = await sendEmailVerificationCodeService(req.body);
+    const user = await findByEmail(emailId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+        error: "Failed to send the email verification code",
+      });
+    }
+
+    await sendEmailVerificationCodeService(emailId);
 
     return res.status(200).json({
       success: true,
-      message: `Email Verification code sent to ${req.body}`,
+      message: `Email Verification code sent to ${req.body.email}`,
     });
   } catch (err) {
     console.error("failed to send email verification code: ", err);

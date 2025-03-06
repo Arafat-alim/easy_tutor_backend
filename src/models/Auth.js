@@ -83,6 +83,18 @@ class Auth {
       .where({ email, deleted_user: 0 })
       .first();
   }
+  static async findByEmailAndUpdateEmailVerificationCode(email, hashedCode) {
+    return db("users")
+      .where({
+        email,
+        email_verified: 0,
+        deleted_user: 0,
+      })
+      .update({
+        email_verification_code: hashedCode,
+        email_verification_code_validation: Date.now(),
+      });
+  }
 }
 
 module.exports = Auth;

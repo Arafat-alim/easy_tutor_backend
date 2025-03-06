@@ -386,17 +386,46 @@ const verifyProfileByEmail = async (userData) => {
 const sendEmailVerificationCodeService = async (userData) => {
   let error;
   try {
-    const { email } = userData;
-    console.log("test email", email);
-    const user = await Auth.findByEmailAndGetSelectiveFields(email);
-
+    console.log("test email", userData);
+    const user = await Auth.findByEmail(userData);
     if (!user) {
       error = new Error("User not Found!");
       error.status = 404;
       throw error;
     }
 
-    const codeValue = await generateOtpCode(6);
+    if (user.email) {
+      const codeValue = await generateOtpCode(6);
+      const hashedCodeValue = await hmacProcess(
+        codeValue,
+        process.env.JWT_SECRET
+      );
+
+      const updatedCount = await Auth.findByEmailAndUpdateEmailVerificationCode(
+        user.email,
+        hashedCodeValue
+      );
+
+      if (updatedCount === 0) {
+        error = new Error(
+          "Unexpected error: Failed to update user with code. User not found or update failed"
+        );
+        error.status = 400;
+        throw error;
+      }
+
+      const emailOptions = {
+        to: user.email,
+        subject: `Hi ${user.username}, Verify Your Email`,
+        username: user.username,
+        headerText: "Email Verification",
+        bodyText: `Welcome to Easy Tutor! Please use the code below to verify your email address. This code will expire in 15 minutes.`,
+        verificationCode: codeValue,
+        footerText: "Thanks for joining us!",
+      };
+
+      await sendEmail(emailOptions);
+    }
     //! hash code
   } catch (err) {
     throw err;
