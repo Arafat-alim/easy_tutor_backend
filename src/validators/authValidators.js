@@ -59,7 +59,7 @@ const validateAddMobile = (data) => {
 };
 
 //! add user role
-const addUserRoleSchema = Joi.object({
+const validateEmailAndRoleSchema = Joi.object({
   email: Joi.string().trim().email().required().messages({
     "string.email": "Email must be a valid email address",
     "any.required": "Email is required",
@@ -73,8 +73,8 @@ const addUserRoleSchema = Joi.object({
     }),
 });
 
-const validateAddUserRole = (data) => {
-  return addUserRoleSchema.validate(data, { abortEarly: false });
+const validateEmailAndRole = (data) => {
+  return validateEmailAndRoleSchema.validate(data, { abortEarly: false });
 };
 
 //! validateSendForgotPasswordCode

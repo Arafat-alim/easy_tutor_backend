@@ -135,7 +135,8 @@ const updateMobileUser = async (userData) => {
 
 const updateUserRole = async (userData) => {
   let error;
-  const { email, role } = userData;
+  const trimmedObj = trimmer(userData);
+  const { email, role } = trimmedObj;
   try {
     const updatedUserCount = await Auth.findByEmailAndUpdateRole(email, role);
 
@@ -144,10 +145,7 @@ const updateUserRole = async (userData) => {
       error.status = 404;
       throw error;
     }
-    return {
-      email,
-      role,
-    };
+    return true;
   } catch (err) {
     console.error("Failed to add user role: ", err);
     throw err;
