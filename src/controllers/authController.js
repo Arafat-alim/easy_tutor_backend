@@ -8,6 +8,7 @@ const {
   validateEmailAndMobile,
   validateOtpEmailAndMobile,
   validateEmailAndOtp,
+  validateEmailAndRole,
 } = require("../validators/authValidators.js");
 const {
   signUpUser,
@@ -23,7 +24,6 @@ const {
   verifyEmailService,
 } = require("../services/authService.js");
 const { hideMobileNumber } = require("../utils/hideMobileNumber.js");
-const { findByEmail } = require("../models/Auth.js");
 
 //! handle Signup
 const handleSignUp = async (req, res) => {

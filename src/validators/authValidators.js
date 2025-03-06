@@ -220,7 +220,7 @@ module.exports = {
   validateSignup,
   validateSignIn,
   validateAddMobile,
-  validateAddUserRole,
+  validateEmailAndRole,
   validateSendForgotPasswordCode,
   validateVerifyPasswordCode,
   validateSendMobileVerificationCode,
