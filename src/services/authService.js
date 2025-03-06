@@ -207,15 +207,19 @@ const sendForgotPasswordCodeViaEmailService = async (userData) => {
 };
 
 const verifyForgotPasswordCodeService = async (userData) => {
-  const { mobile, otp, password } = userData;
+  const { email, otp, password } = userData;
   try {
     let error;
-    const user = await Auth.findByMobile(mobile);
+    const user = await Auth.findByEmail(email);
     if (!user) {
       throw new Error("User not found");
     }
+    const timeLimit = process.env.TIME_LIMIT || 15;
 
-    if (Date.now() - user.forgot_password_code_validation > 5 * 60 * 1000) {
+    if (
+      Date.now() - user.forgot_password_code_validation >
+      timeLimit * 60 * 1000
+    ) {
       error = new Error("Code expired");
       error.status = 410;
       throw error;
@@ -233,8 +237,8 @@ const verifyForgotPasswordCodeService = async (userData) => {
     const hashedNewPassword = await doHash(password);
 
     if (user.forgot_password_code === hashedCode) {
-      const response = await Auth.findByMobileAndUpdatePassword(
-        mobile,
+      const response = await Auth.findByEmailAndUpdatePassword(
+        user.email,
         hashedNewPassword
       );
       if (!response) {
@@ -244,6 +248,16 @@ const verifyForgotPasswordCodeService = async (userData) => {
         error.status = 400;
         throw error;
       }
+      //! Notfiying user password has been changed
+      const emailOptions = {
+        to: user.email,
+        subject: `Hi ${user.username}, Your Password Has Been Changed`,
+        username: user.username,
+        headerText: "Password Change Confirmation",
+        bodyText: `This email confirms that your password for ${user.username} has been successfully changed. If you did not initiate this change, please contact us immediately.`,
+        footerText: "For any assistance, please contact our support team.",
+      };
+      await sendEmail(emailOptions);
       return true;
     } else {
       error = new Error("Invalid Code");
@@ -304,7 +318,11 @@ const validateMobileVerificationCodeService = async (userData) => {
       error.status = 404;
       throw error;
     }
-    if (Date.now() - user.mobile_verification_code_validation > 5 * 60 * 1000) {
+    const timeLimit = process.env.TIME_LIMIT || 15;
+    if (
+      Date.now() - user.mobile_verification_code_validation >
+      timeLimit * 60 * 1000
+    ) {
       error = new Error("OTP Expired");
       error.status = 410;
       throw error;

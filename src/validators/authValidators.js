@@ -106,11 +106,11 @@ const verifyForgotPasswordCodeSchema = Joi.object({
       "any.required": "OTP is required",
     }),
 
-  mobile: Joi.string().trim().length(10).pattern(/^\d+$/).required().messages({
-    "string.length": "Mobile number must be exactly 10 digits",
-    "string.pattern.base": "Mobile number must contain only digits",
-    "any.required": "Mobile number is required",
+  email: Joi.string().trim().email().required().messages({
+    "string.email": "Email must be a valid email address",
+    "any.required": "Email is required",
   }),
+
   password: Joi.string()
     .trim()
     .pattern(new RegExp("^[a-zA-Z0-9]{8,30}$"))

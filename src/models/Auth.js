@@ -46,8 +46,8 @@ class Auth {
     });
   }
 
-  static async findByMobileAndUpdatePassword(mobile, password) {
-    return db("users").where({ mobile, deleted_user: 0 }).update({
+  static async findByEmailAndUpdatePassword(email, password) {
+    return db("users").where({ email, deleted_user: 0 }).update({
       password,
       forgot_password_code: null,
       forgot_password_code_validation: null,
