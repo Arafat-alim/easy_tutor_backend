@@ -10,10 +10,14 @@ const { generateToken } = require("../utils/jwtTokenUtility.js");
 const trimmer = require("../utils/trimmer.js");
 const sendEmail = require("../utils/sendMail.js");
 const { sendSMS } = require("../utils/sendSMS.js");
+const {
+  generateAvatarURLUsingEmail,
+} = require("../utils/generateAvatarURLUsingEmail.js");
 
 const signUpUser = async (userData) => {
   try {
     const { email, mobile, password } = userData;
+    const avatarURL = generateAvatarURLUsingEmail(email);
     const hashedPassword = await doHash(password);
     const username = generateUsername(email);
     const prepareData = {
@@ -21,6 +25,7 @@ const signUpUser = async (userData) => {
       username,
       mobile,
       password: hashedPassword,
+      avatar: avatarURL,
     };
 
     const user = await Auth.create(prepareData);
