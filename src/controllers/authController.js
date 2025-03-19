@@ -9,6 +9,7 @@ const {
   validateOtpEmailAndMobile,
   validateEmailAndOtp,
   validateEmailAndRole,
+  validateMobile,
 } = require("../validators/authValidators.js");
 const {
   signUpUser,
@@ -277,33 +278,19 @@ const handleVerifyForgotPasswordCode = async (req, res) => {
 //! handle send mobile verification code
 
 const handleSendMobileVerificationCode = async (req, res) => {
-  const mobile = req.body?.mobile;
-  const email = req.body.email;
-
   try {
-    if (!email) {
-      return res.status(400).json({
-        success: false,
-        message: "Email not found",
-      });
-    }
-    if (!mobile) {
-      return res.status(400).json({
-        success: false,
-        message: "Mobile number not found",
-      });
-    }
-    const { error } = await validateEmailAndMobile({ email, mobile });
+    const { error } = await validateMobile(req.body);
 
     if (error?.details) {
       return res.status(400).json({
         success: false,
-        message: "Validation Error",
+        message: "Validation Error!",
         error: error?.details.map((err) => err.message),
       });
     }
 
-    await sendMobileVerificationCodeService({ email, mobile });
+    await sendMobileVerificationCodeService(req.body);
+
     const mobileNumber = hideMobileNumber(req.body.mobile);
     return res.status(200).json({
       success: true,

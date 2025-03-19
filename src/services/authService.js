@@ -305,36 +305,61 @@ const verifyForgotPasswordCodeService = async (userData) => {
 };
 
 const sendMobileVerificationCodeService = async (userData) => {
-  const { mobile, email } = userData;
-  const enteredMobile = mobile.trim();
-  const emailId = email.trim();
   let error;
+  let response;
+  const { mobile } = userData;
+  const enteredMobile = mobile.trim();
   try {
-    const user = await Auth.findByEmail(emailId);
+    const user = await Auth.findByMobile(enteredMobile);
     if (!user) {
       error = new Error("User not found");
       error.status = 404;
       throw error;
     }
+    const otpCode = await OTP.generateOTP();
+    const hashedCode = await hmacProcess(otpCode, process.env.JWT_SECRET);
+    const updatedCount = await Auth.findByUserIdAndUpdateMobileVerification(
+      user.id
+    );
 
-    const codeValue = await generateOtpCode(6);
-    if (user.mobile) {
-      await sendSMS(enteredMobile, codeValue);
-      const hashedCodeValue = await hmacProcess(
-        codeValue,
-        process.env.JWT_SECRET
+    if (!updatedCount) {
+      error = new Error(
+        "Unexpected error: Failed to update user for email verification"
       );
-      const updatedCount =
-        await Auth.findByMobileAndUpdateMobileVerificationCode(
-          user.mobile,
-          hashedCodeValue
-        );
-      if (updatedCount === 0) {
-        throw new Error(
-          "Unexpected error: Failed to update user with code. User not found or update failed"
-        );
-      }
-      return true;
+      error.status = 400;
+      throw error;
+    }
+
+    const existingOTP = await OTP.findUserOTPDetailsByUserIdAndType(
+      user.id,
+      "mobile"
+    );
+
+    if (existingOTP.length) {
+      // Updating the existing otp
+      response = await OTP.update({
+        userId: user.id,
+        otp_code: otpCode,
+        type: "mobile",
+        hashed_code: hashedCode,
+        expiresIn: 5,
+      });
+    } else {
+      // save new otp
+      response = await OTP.saveOTP({
+        userId: user.id,
+        otp_code: otpCode,
+        type: "mobile",
+        hashed_code: hashedCode,
+        expiresIn: 5,
+      });
+    }
+    if (response) {
+      sendMobileOTPVerificationCodeService(user.mobile, otpCode);
+    } else {
+      error = new Error("Failed to send Mobile verification code");
+      error.status = 400;
+      throw error;
     }
   } catch (err) {
     throw err;

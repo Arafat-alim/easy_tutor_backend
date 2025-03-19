@@ -106,6 +106,17 @@ class Auth {
     });
   }
 
+  static async findByUserIdAndUpdateMobileVerification(userId) {
+    return db("users")
+      .where({
+        id: userId,
+        deleted_at: null,
+      })
+      .update({
+        mobile_verified: 0,
+      });
+  }
+
   static async findByEmailAndVerify(email) {
     return db("users")
       .where({
