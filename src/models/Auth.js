@@ -44,7 +44,7 @@ class Auth {
   }
 
   static async findByEmailAndUpdateForgotPasswordCode(email, hashedCode) {
-    return db("users").where({ email, deleted_user: 0 }).update({
+    return db("users").where({ email, deleted_at: null }).update({
       forgot_password_code: hashedCode,
       forgot_password_code_validation: Date.now(),
     });

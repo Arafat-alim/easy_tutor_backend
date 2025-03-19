@@ -21,7 +21,7 @@ const {
 const { isOTPExpired } = require("../utils/isOTPExpired.js");
 
 const JWT_SECRET = process.env.JWT_SECRET;
-const enabledEmailOTP = process.env.ENABLED_OTP_EMAIL;
+const enabledEmailOTP = process.env.ENABLED_OTP_EMAIL || "true";
 
 const signUpUser = async (userData) => {
   let error;
@@ -193,11 +193,10 @@ const updateUserRole = async (userData) => {
 };
 
 const sendForgotPasswordCodeViaEmailService = async (userData) => {
-  const { email } = userData;
-  const emailId = email.trim();
   let error;
+  const { email } = trimmer(userData);
   try {
-    const user = await Auth.findByEmail(emailId);
+    const user = await Auth.findByEmail(email);
     if (!user) {
       error = new Error("User not found!");
       error.status = 404;
@@ -205,11 +204,8 @@ const sendForgotPasswordCodeViaEmailService = async (userData) => {
     }
 
     if (user.email) {
-      const codeValue = generateOtpCode(6);
-      const hashedCodeValue = await hmacProcess(
-        codeValue,
-        process.env.JWT_SECRET
-      );
+      const otpCode = await OTP.generateOTP();
+      const hashedCodeValue = await hmacProcess(otpCode, JWT_SECRET);
       //! save code value to users_otp table and users table
       const updatedCount = await Auth.findByEmailAndUpdateForgotPasswordCode(
         user.email,
@@ -227,13 +223,11 @@ const sendForgotPasswordCodeViaEmailService = async (userData) => {
         username: user.username,
         headerText: "Forgot Password Code",
         bodyText: `You have requested a password reset. Please enter the below code to reset your password. This code will expire in 15 mins.`,
-        actionText: "Visit Dashboard",
-        actionUrl: "https://dev-arafat.netlify.app/",
         footerText: "We're excited to have you on board!",
-        verificationCode: codeValue,
+        verificationCode: otpCode,
       };
 
-      enabledEmailOTP && (await sendEmail(emailOptions));
+      enabledEmailOTP === "true" && (await sendEmail(emailOptions));
     }
     return true;
   } catch (err) {
@@ -586,7 +580,7 @@ const verifyEmailService = async (userData) => {
         footerText: "We're glad to have you on board!",
       };
 
-      enabledEmailOTP && (await sendEmail(emailOptions));
+      enabledEmailOTP === "true" && (await sendEmail(emailOptions));
       return true;
     } else {
       error = new Error("Invalid Code");
