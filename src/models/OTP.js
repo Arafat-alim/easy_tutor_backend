@@ -112,9 +112,9 @@ class OTP {
     }
   }
 
-  static async findByUserIdAndValidateEmailOTP(userId) {
+  static async findByUserIdAndTypeAndValidateOTP(userId, type) {
     return db("otp_verifications")
-      .where({ user_id: userId, deleted_at: null })
+      .where({ user_id: userId, deleted_at: null, type })
       .update({ verified: true, deleted_at: db.fn.now(), hashed_code: null });
   }
 }

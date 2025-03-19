@@ -107,6 +107,11 @@ const validateOTPSchema = Joi.object({
   otp: otpValidation,
 });
 
+const validateMobileAndOTPSchema = Joi.object({
+  mobile: mobileValidation,
+  otp: otpValidation,
+});
+
 // Validation functions
 const validateSignup = (data) => {
   return signUpSchema.validate(data, { abortEarly: false });
@@ -162,6 +167,10 @@ const validateOTP = (data) => {
   return validateOTPSchema.validate(data, { abortEarly: false });
 };
 
+const validateMobileAndOTP = (data) => {
+  return validateMobileAndOTPSchema.validate(data, { abortEarly: false });
+};
+
 module.exports = {
   validateSignup,
   validateSignIn,
@@ -176,4 +185,5 @@ module.exports = {
   validateEmailAndOtp,
   validateMobile,
   validateOTP,
+  validateMobileAndOTP,
 };

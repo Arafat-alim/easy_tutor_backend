@@ -369,53 +369,69 @@ const sendMobileVerificationCodeService = async (userData) => {
 };
 
 const validateMobileVerificationCodeService = async (userData) => {
-  const trimmedObj = trimmer(userData);
-  const { mobile, otp, email } = trimmedObj;
   let error;
+  const { mobile, otp } = trimmer(userData);
   try {
-    const user = await Auth.findByEmail(email);
+    const user = await Auth.findByMobile(mobile);
     if (!user) {
       error = new Error("User not found");
       error.status = 404;
       throw error;
     }
-    const timeLimit = process.env.TIME_LIMIT || 15;
-    if (
-      Date.now() - user.mobile_verification_code_validation >
-      timeLimit * 60 * 1000
-    ) {
-      error = new Error("OTP Expired");
-      error.status = 410;
-      throw error;
-    }
-
-    if (user.mobile !== mobile) {
-      error = new Error("Mobile number does not matched");
+    if (user.mobile_verified) {
+      error = new Error("Mobile number is already verified");
       error.status = 400;
       throw error;
     }
 
-    if (
-      !user.mobile_verification_code ||
-      !user.mobile_verification_code_validation
-    ) {
+    const existingOTP = await OTP.findUserOTPDetailsByUserIdAndType(
+      user.id,
+      "mobile"
+    );
+    if (!existingOTP || !Object.keys(existingOTP).length) {
       error = new Error(
-        "Something went wrong with the mobile verification code or mobile verification code validation"
+        "Either mobile is already verified, else please send verification code"
       );
-      error.status = 403;
+      error.status = 400;
       throw error;
     }
-    const hashedCode = await hmacProcess(otp, process.env.JWT_SECRET);
 
-    if (hashedCode === user.mobile_verification_code) {
-      const response = await Auth.findByEmailAndVerifyOTP(user.mobile);
-      if (!response) {
+    const otpExpired = isOTPExpired(existingOTP.expires_at);
+
+    if (otpExpired || existingOTP.deleted_at || existingOTP.verified) {
+      error = new Error("OTP is expired.");
+      error.status = 410;
+      throw error;
+    }
+    if (!existingOTP.hashed_code) {
+      error = new Error("Something went wrong, please try again later");
+      error.status = 400;
+      throw error;
+    }
+
+    const hashedCode = await hmacProcess(otp, JWT_SECRET);
+
+    if (hashedCode === existingOTP.hashed_code) {
+      const userResponse = await Auth.findByUserIdAndValidateMobile(user.id);
+      if (!userResponse) {
         error = new Error(
-          "Something went wrong while changing the new password"
+          "Something went wrong while verifying the mobile otp"
         );
         error.status = 400;
         throw error;
       }
+
+      const otpResponse = await OTP.findByUserIdAndTypeAndValidateOTP(
+        user.id,
+        "mobile"
+      );
+
+      if (!otpResponse) {
+        error = new Error("Something went wrong while verifying the email");
+        error.status = 400;
+        throw error;
+      }
+
       return true;
     } else {
       error = new Error("Invalid Code");
@@ -512,7 +528,7 @@ const verifyEmailService = async (userData) => {
     }
 
     if (user.email_verified) {
-      error = new Error("User already verified");
+      error = new Error("Email address is already verified");
       error.status = 400;
       throw error;
     }
@@ -524,7 +540,7 @@ const verifyEmailService = async (userData) => {
     );
     if (!existingOTP || !Object.keys(existingOTP).length) {
       error = new Error(
-        "Either user already verified, else please send verification code"
+        "Either email address is already verified, else please send verification code"
       );
       error.status = 400;
       throw error;
@@ -553,7 +569,10 @@ const verifyEmailService = async (userData) => {
         error.status = 400;
         throw error;
       }
-      const otpResponse = await OTP.findByUserIdAndValidateEmailOTP(user.id);
+      const otpResponse = await OTP.findByUserIdAndTypeAndValidateOTP(
+        user.id,
+        "email"
+      );
       if (!otpResponse) {
         error = new Error("Something went wrong while verifying the email");
         error.status = 400;

@@ -5,11 +5,11 @@ const {
   validateAddUserRole,
   validateVerifyPasswordCode,
   validateEmail,
-  validateEmailAndMobile,
-  validateOtpEmailAndMobile,
+
   validateEmailAndOtp,
   validateEmailAndRole,
   validateMobile,
+  validateMobileAndOTP,
 } = require("../validators/authValidators.js");
 const {
   signUpUser,
@@ -314,16 +314,8 @@ const handleSendMobileVerificationCode = async (req, res) => {
 };
 
 const handleVerifyMobileVerificaitonCode = async (req, res) => {
-  const { email } = req.user;
-  const { mobile, otp } = req.body;
-  const prepareData = {
-    email,
-    mobile,
-    otp,
-  };
   try {
-    const { error } = await validateOtpEmailAndMobile(prepareData);
-
+    const { error } = await validateMobileAndOTP(req.body);
     if (error?.details) {
       return res.status(400).json({
         success: false,
@@ -331,10 +323,10 @@ const handleVerifyMobileVerificaitonCode = async (req, res) => {
         error: error?.details.map((err) => err.message),
       });
     }
-    await validateMobileVerificationCodeService(prepareData);
+    await validateMobileVerificationCodeService(req.body);
     return res.status(200).json({
       success: true,
-      message: "Mobile number verified!",
+      message: "Mobile number is verified successfully!",
     });
   } catch (err) {
     console.error("Failed to verify the mobile verification code", err);
