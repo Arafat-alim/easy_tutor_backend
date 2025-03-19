@@ -22,11 +22,7 @@ authRouter.get("/logout", handleSignOut);
 authRouter.get("/profile", authMiddleware, handleUserProfile);
 
 // authRouter.patch("/add-mobile", handleUpdateMobile);
-authRouter.post(
-  "/mobile/verification-code",
-  authMiddleware,
-  handleSendMobileVerificationCode
-);
+authRouter.post("/mobile/verification-code", handleSendMobileVerificationCode);
 authRouter.post(
   "/mobile/verification",
   authMiddleware,

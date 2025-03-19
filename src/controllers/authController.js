@@ -69,7 +69,7 @@ const handleSignUp = async (req, res) => {
       });
     }
 
-    return res.status(500).json({
+    return res.status(err.status || 500).json({
       success: false,
       message: "Failed to signup",
       error: err.message,
@@ -114,7 +114,7 @@ const handleSignIn = async (req, res) => {
         error: err.message,
       });
     }
-    return res.status(500).json({
+    return res.status(err.status || 500).json({
       success: false,
       message: "Failed to sign in",
       error: err.message,
@@ -132,7 +132,7 @@ const handleSignOut = async (req, res) => {
     });
   } catch (err) {
     console.error("Failed to signout: ", err);
-    return res.status(500).json({
+    return res.status(err.status || 500).json({
       success: false,
       message: "Failed to signout",
       error: err.message,
@@ -167,7 +167,7 @@ const handleUpdateMobile = async (req, res) => {
         message: "Mobile number already exists",
       });
     }
-    return res.status(500).json({
+    return res.status(err.status || 500).json({
       success: false,
       message: "Failed to add mobile number",
       error: err.message,
@@ -202,7 +202,7 @@ const handleUpdateUserRole = async (req, res) => {
     });
   } catch (err) {
     console.error("Failed to add user role: ", err);
-    return res.status(500).json({
+    return res.status(err.status || 500).json({
       success: false,
       message: "Failed to add user role!",
       error: err.message,
@@ -230,7 +230,7 @@ const handleSendForgotPasswordCodeViaEmail = async (req, res) => {
     });
   } catch (err) {
     console.error("Failed to send forgot password code: ", err);
-    return res.status(500).json({
+    return res.status(err.status || 500).json({
       success: false,
       message: "Failed to perform forgot password. Please try again later.",
       error: err.message,
@@ -266,7 +266,7 @@ const handleVerifyForgotPasswordCode = async (req, res) => {
         error: err.message,
       });
     }
-    return res.status(500).json({
+    return res.status(err.status || 500).json({
       success: false,
       message: "Internal Server Error",
       error: err.message,
@@ -277,10 +277,16 @@ const handleVerifyForgotPasswordCode = async (req, res) => {
 //! handle send mobile verification code
 
 const handleSendMobileVerificationCode = async (req, res) => {
-  const email = req.user.email;
   const mobile = req.body?.mobile;
+  const email = req.body.email;
 
   try {
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email not found",
+      });
+    }
     if (!mobile) {
       return res.status(400).json({
         success: false,
@@ -312,7 +318,7 @@ const handleSendMobileVerificationCode = async (req, res) => {
         error: err.message,
       });
     }
-    return res.status(500).json({
+    return res.status(err.status || 500).json({
       success: false,
       message: "Internal Server Error",
       error: err.message,
@@ -345,7 +351,7 @@ const handleVerifyMobileVerificaitonCode = async (req, res) => {
     });
   } catch (err) {
     console.error("Failed to verify the mobile verification code", err);
-    return res.status(500).json({
+    return res.status(err.status || 500).json({
       success: false,
       message: "Internal Server Error",
       error: err.message,
@@ -380,7 +386,7 @@ const handleUserProfile = async (req, res) => {
     });
   } catch (err) {
     console.error("Failed to handle user profile", err);
-    return res.status(500).json({
+    return res.status(err.status || 500).json({
       success: false,
       message: "Failed to handle user profile",
       error: err.message,
@@ -390,6 +396,7 @@ const handleUserProfile = async (req, res) => {
 
 const handleSendEmailVerificationCode = async (req, res) => {
   try {
+    console.log("Email", req);
     const { error } = await validateEmail(req.body);
     if (error?.details) {
       return res.status(400).json({
@@ -407,7 +414,7 @@ const handleSendEmailVerificationCode = async (req, res) => {
     });
   } catch (err) {
     console.error("failed to send email verification code: ", err);
-    return res.status(500).json({
+    return res.status(err.status || 500).json({
       success: false,
       message:
         "Failed to send email verification code. Please try again later!",
@@ -433,7 +440,7 @@ const handleVerifyEmailVerificaitonCode = async (req, res) => {
       message: "Email is verified!",
     });
   } catch (err) {
-    return res.status(500).json({
+    return res.status(err.status || 500).json({
       success: false,
       message: "Failed to Verify your email address, please try again later",
       error: err.message,

@@ -1,5 +1,6 @@
 const generateUsername = require("../utils/generateUsername.js");
 const Auth = require("../models/Auth.js");
+const OTP = require("../models/OTP.js");
 const generateOtpCode = require("../utils/generateOtpCode.js");
 const {
   doHash,
@@ -13,10 +14,23 @@ const { sendSMS } = require("../utils/sendSMS.js");
 const {
   generateAvatarURLUsingEmail,
 } = require("../utils/generateAvatarURLUsingEmail.js");
+const {
+  sendMobileOTPVerificationCodeService,
+  sendEmailOTPVerificationCodeService,
+} = require("./OTPService.js");
 
 const signUpUser = async (userData) => {
+  let error;
   try {
     const { email, mobile, password } = userData;
+    // ! check user already exists or not
+    const existingUser = await Auth.findByEmail(email);
+    if (existingUser) {
+      error = new Error("User already exists!, Please login");
+      error.status = 400;
+      throw error;
+    }
+
     const avatarURL = generateAvatarURLUsingEmail(email);
     const hashedPassword = await doHash(password);
     const username = generateUsername(email);
@@ -29,23 +43,10 @@ const signUpUser = async (userData) => {
     };
 
     const user = await Auth.create(prepareData);
-    if (user[0] === 0) {
-      const emailOptions = {
-        to: email,
-        subject: `Welcome! ${username}`,
-        username: "JohnDoe",
-        headerText: "Welcome!",
-        bodyText:
-          "Thank you for registering! Please verify your email to access more features.",
-        actionText: "Visit Dashboard",
-        actionUrl: "https://dev-arafat.netlify.app/",
-        footerText: "We're excited to have you on board!",
-        verificationCode: null,
-      };
 
-      sendEmail(emailOptions)
-        .then(() => console.log("Email sent successfully"))
-        .catch((err) => console.error("Failed to send email:", err));
+    if (user[0] === 0) {
+      await sendMobileOTPVerificationCodeService(prepareData.mobile);
+      await sendEmailOTPVerificationCodeService(prepareData.email);
     }
 
     return { email, mobile };
