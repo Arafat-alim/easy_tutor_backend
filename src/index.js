@@ -6,6 +6,7 @@ const morgan = require("morgan");
 const authRouter = require("./routes/authRoutes");
 const apiLimiter = require("./middlewares/apiLimiter");
 const userRouter = require("./routes/userRoutes");
+const graphqlRoute = require("./graphql");
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.use(helmet());
 //! routes
 // app.use("/api/", apiLimiter);
 app.use("/api/v1/auth", authRouter);
+app.use("/api/v1", graphqlRoute);
 
 //! Test route
 app.get("/", (req, res) => {
