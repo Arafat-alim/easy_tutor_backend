@@ -82,11 +82,13 @@ class OTP {
    */
 
   static async findUserOTPDetailsByUserIdAndType(userId, type) {
-    return db("otp_verifications").where({
-      user_id: userId,
-      type: type,
-      deleted_at: null,
-    });
+    return db("otp_verifications")
+      .where({
+        user_id: userId,
+        type: type,
+        deleted_at: null,
+      })
+      .first();
   }
 
   static async update({ userId, otp_code, type, hashed_code, expiresIn = 5 }) {
@@ -108,6 +110,12 @@ class OTP {
       console.error("Failed to update: ", error);
       return false;
     }
+  }
+
+  static async findByUserIdAndValidateEmailOTP(userId) {
+    return db("otp_verifications")
+      .where({ user_id: userId, deleted_at: null })
+      .update({ verified: true, deleted_at: db.fn.now(), hashed_code: null });
   }
 }
 

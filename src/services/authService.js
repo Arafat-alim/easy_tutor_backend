@@ -18,8 +18,10 @@ const {
   sendMobileOTPVerificationCodeService,
   sendEmailOTPVerificationCodeService,
 } = require("./OTPService.js");
+const { isOTPExpired } = require("../utils/isOTPExpired.js");
 
 const JWT_SECRET = process.env.JWT_SECRET;
+const enabledEmailOTP = process.env.ENABLED_OTP_EMAIL;
 
 const signUpUser = async (userData) => {
   let error;
@@ -232,7 +234,7 @@ const sendForgotPasswordCodeViaEmailService = async (userData) => {
         verificationCode: codeValue,
       };
 
-      await sendEmail(emailOptions);
+      enabledEmailOTP && (await sendEmail(emailOptions));
     }
     return true;
   } catch (err) {
@@ -335,7 +337,7 @@ const sendMobileVerificationCodeService = async (userData) => {
       "mobile"
     );
 
-    if (existingOTP.length) {
+    if (existingOTP && Object.keys(existingOTP).length) {
       // Updating the existing otp
       response = await OTP.update({
         userId: user.id,
@@ -444,6 +446,7 @@ const verifyProfileByEmail = async (userData) => {
 
 const sendEmailVerificationCodeService = async (userData) => {
   let error;
+  let response;
   const { email } = trimmer(userData);
   try {
     const user = await Auth.findByEmail(email);
@@ -470,29 +473,27 @@ const sendEmailVerificationCodeService = async (userData) => {
       "email"
     );
 
-    if (existingOTP.length) {
-      // Updating the existing OTP
-      const response = await OTP.update({
-        userId: user.id,
-        otp_code: otpCode,
-        type: "email",
-        hashed_code: hashedCode,
-        expiresIn: 15,
-      });
-      response &&
-        (await sendEmailOTPVerificationCodeService(user.email, otpCode));
-    } else {
+    if (!existingOTP || !Object.keys(existingOTP).length) {
       // save new otp
-      const response = await OTP.saveOTP({
+      response = await OTP.saveOTP({
         userId: user.id,
         otp_code: otpCode,
         type: "email",
         hashed_code: hashedCode,
         expiresIn: 15,
       });
-      response &&
-        (await sendEmailOTPVerificationCodeService(user.email, otpCode));
+    } else {
+      // Updating the existing OTP
+      response = await OTP.update({
+        userId: user.id,
+        otp_code: otpCode,
+        type: "email",
+        hashed_code: hashedCode,
+        expiresIn: 15,
+      });
     }
+    response &&
+      (await sendEmailOTPVerificationCodeService(user.email, otpCode));
   } catch (err) {
     console.error("Error in sendEmailVerificationCodeService:", err.message);
     throw err;
@@ -500,9 +501,8 @@ const sendEmailVerificationCodeService = async (userData) => {
 };
 
 const verifyEmailService = async (userData) => {
-  const trimmedObj = trimmer(userData);
-  const { email, otp } = trimmedObj;
   let error;
+  const { email, otp } = trimmer(userData);
   try {
     const user = await Auth.findByEmail(email);
     if (!user) {
@@ -511,32 +511,50 @@ const verifyEmailService = async (userData) => {
       throw error;
     }
 
-    const timeLimit = process.env.TIME_LIMIT || 15;
-    if (
-      Date.now() - user.email_verification_code_validation >
-      timeLimit * 60 * 1000
-    ) {
-      error = new Error("OTP Expired");
+    if (user.email_verified) {
+      error = new Error("User already verified");
+      error.status = 400;
+      throw error;
+    }
+
+    //! find user in otp_verifications table
+    const existingOTP = await OTP.findUserOTPDetailsByUserIdAndType(
+      user.id,
+      "email"
+    );
+    if (!existingOTP || !Object.keys(existingOTP).length) {
+      error = new Error(
+        "Either user already verified, else please send verification code"
+      );
+      error.status = 400;
+      throw error;
+    }
+
+    const otpExpired = isOTPExpired(existingOTP.expires_at);
+
+    if (otpExpired || existingOTP.deleted_at || existingOTP.verified) {
+      error = new Error("OTP is expired.");
       error.status = 410;
       throw error;
     }
 
-    if (
-      !user.email_verification_code ||
-      !user.email_verification_code_validation
-    ) {
-      error = new Error(
-        "Something went wrong with the email verification code or email verification code validation"
-      );
-      error.status = 403;
+    if (!existingOTP.hashed_code) {
+      error = new Error("Something went wrong, please try again later");
+      error.status = 400;
       throw error;
     }
-    const hashedCode = await hmacProcess(otp, process.env.JWT_SECRET);
 
-    if (hashedCode === user.email_verification_code) {
-      const response = await Auth.findByEmailAndVerify(user.email);
+    const hashedCode = await hmacProcess(otp, JWT_SECRET);
 
-      if (!response) {
+    if (hashedCode === existingOTP.hashed_code) {
+      const userResponse = await Auth.findByUserIdAndValidateEmail(user.id);
+      if (!userResponse) {
+        error = new Error("Something went wrong while verifying the email");
+        error.status = 400;
+        throw error;
+      }
+      const otpResponse = await OTP.findByUserIdAndValidateEmailOTP(user.id);
+      if (!otpResponse) {
         error = new Error("Something went wrong while verifying the email");
         error.status = 400;
         throw error;
@@ -550,7 +568,7 @@ const verifyEmailService = async (userData) => {
         footerText: "We're glad to have you on board!",
       };
 
-      await sendEmail(emailOptions);
+      enabledEmailOTP && (await sendEmail(emailOptions));
       return true;
     } else {
       error = new Error("Invalid Code");

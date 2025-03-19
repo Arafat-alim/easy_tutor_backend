@@ -30,7 +30,7 @@ authRouter.post(
 );
 
 authRouter.post("/email/verification-code", handleSendEmailVerificationCode);
-authRouter.post("/email/verification", handleVerifyEmailVerificaitonCode);
+authRouter.post("/email/verify", handleVerifyEmailVerificaitonCode);
 
 authRouter.patch("/update-role", authMiddleware, handleUpdateUserRole);
 

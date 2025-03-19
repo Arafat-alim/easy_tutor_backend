@@ -130,6 +130,17 @@ class Auth {
       });
   }
 
+  static async findByUserIdAndValidateEmail(userId) {
+    return db("users")
+      .where({
+        id: userId,
+        deleted_at: null,
+      })
+      .update({
+        email_verified: true,
+      });
+  }
+
   //! google signon
   static async findUserByGoogleId(google_id) {
     return db("users").where({ google_id }).first();
