@@ -13,7 +13,7 @@ class Auth {
   }
 
   static async findByEmail(email) {
-    return db("users").where({ deleted_user: 0, email }).first();
+    return db("users").where({ deleted_at: null, email }).first();
   }
 
   static async findByMobileAndUpdateRole(mobile, role) {
@@ -50,8 +50,8 @@ class Auth {
     });
   }
 
-  static async findByEmailAndUpdatePassword(email, password) {
-    return db("users").where({ email, deleted_user: 0 }).update({
+  static async findByUserIdAndUpdatePassword(userId, password) {
+    return db("users").where({ id: userId, deleted_user: 0 }).update({
       password,
       forgot_password_code: null,
       forgot_password_code_validation: null,

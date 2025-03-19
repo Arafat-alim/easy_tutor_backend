@@ -227,7 +227,7 @@ const sendForgotPasswordCodeViaEmailService = async (userData) => {
         verificationCode: otpCode,
       };
 
-      enabledEmailOTP === "true" && (await sendEmail(emailOptions));
+      enabledEmailOTP === "false" && (await sendEmail(emailOptions));
     }
     return true;
   } catch (err) {
@@ -262,12 +262,12 @@ const verifyForgotPasswordCodeService = async (userData) => {
       throw error;
     }
 
-    const hashedCode = await hmacProcess(otp, process.env.JWT_SECRET);
+    const hashedCode = await hmacProcess(otp, JWT_SECRET);
     const hashedNewPassword = await doHash(password);
 
     if (user.forgot_password_code === hashedCode) {
-      const response = await Auth.findByEmailAndUpdatePassword(
-        user.email,
+      const response = await Auth.findByUserIdAndUpdatePassword(
+        user.id,
         hashedNewPassword
       );
       if (!response) {
@@ -286,7 +286,7 @@ const verifyForgotPasswordCodeService = async (userData) => {
         bodyText: `This email confirms that your password for ${user.username} has been successfully changed. If you did not initiate this change, please contact us immediately.`,
         footerText: "For any assistance, please contact our support team.",
       };
-      await sendEmail(emailOptions);
+      enabledEmailOTP === "true" && (await sendEmail(emailOptions));
       return true;
     } else {
       error = new Error("Invalid Code");
