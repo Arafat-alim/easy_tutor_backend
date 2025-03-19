@@ -152,6 +152,12 @@ class Auth {
       });
   }
 
+  static async findByUserIdAndDeleteUser(userId) {
+    return db("users").where({ id: userId, deleted_at: null }).update({
+      deleted_at: db.fn.now(),
+    });
+  }
+
   //! google signon
   static async findUserByGoogleId(google_id) {
     return db("users").where({ google_id }).first();
