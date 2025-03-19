@@ -7,14 +7,13 @@ const { sendSMS } = require("../utils/sendSMS");
 const enabledEmailOTP = process.env.ENABLED_OTP_EMAIL || "true";
 const enabledMobileOTP = process.env.ENABLED_OTP_MOBILE || "true";
 
-const sendMobileOTPVerificationCodeService = async (mobile) => {
+const sendMobileOTPVerificationCodeService = async (mobile, otp) => {
   let error;
   if (!mobile) {
     error = new Error("Mobile number is missing");
     error.status = 400;
     throw error;
   }
-  const enteredMobile = mobile.trim();
   try {
     const user = await Auth.findByMobile(mobile);
     if (!user) {
@@ -23,19 +22,7 @@ const sendMobileOTPVerificationCodeService = async (mobile) => {
       throw error;
     }
     if (user.mobile) {
-      const otp = await OTP.generateOTP();
-      const hashedCodeValue = await hmacProcess(otp, process.env.JWT_SECRET);
-      const prepareData = {
-        userId: user.id,
-        otp_code: otp,
-        hashed_code: hashedCodeValue,
-        expiresIn: 5,
-        type: "mobile",
-      };
-      const result = await OTP.saveOTP(prepareData);
-      if (result) {
-        enabledMobileOTP === "true" && (await sendSMS(enteredMobile, otp));
-      }
+      enabledMobileOTP === "true" && (await sendSMS(user.mobile, otp));
     }
   } catch (error) {
     throw error;

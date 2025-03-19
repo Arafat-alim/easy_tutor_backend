@@ -396,7 +396,6 @@ const handleUserProfile = async (req, res) => {
 
 const handleSendEmailVerificationCode = async (req, res) => {
   try {
-    console.log("Email", req);
     const { error } = await validateEmail(req.body);
     if (error?.details) {
       return res.status(400).json({

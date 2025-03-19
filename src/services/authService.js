@@ -19,6 +19,8 @@ const {
   sendEmailOTPVerificationCodeService,
 } = require("./OTPService.js");
 
+const JWT_SECRET = process.env.JWT_SECRET;
+
 const signUpUser = async (userData) => {
   let error;
   try {
@@ -45,8 +47,39 @@ const signUpUser = async (userData) => {
     const user = await Auth.create(prepareData);
 
     if (user[0] === 0) {
-      await sendMobileOTPVerificationCodeService(prepareData.mobile);
-      await sendEmailOTPVerificationCodeService(prepareData.email);
+      const emailOTP = await OTP.generateOTP();
+      const mobileOTP = await OTP.generateOTP();
+      const hashedEmailOTP = await hmacProcess(emailOTP, JWT_SECRET);
+      const hashedMobileOTP = await hmacProcess(emailOTP, JWT_SECRET);
+      const existingUser = await Auth.findByEmail(prepareData.email);
+      if (existingUser) {
+        const newEmailOTPEntry = await OTP.saveOTP({
+          userId: existingUser.id,
+          otp_code: emailOTP,
+          type: "email",
+          hashed_code: hashedEmailOTP,
+          expiresIn: 15,
+        });
+        const newMobileOTPEntry = await OTP.saveOTP({
+          userId: existingUser.id,
+          otp_code: mobileOTP,
+          type: "mobile",
+          hashed_code: hashedMobileOTP,
+          expiresIn: 5,
+        });
+
+        newEmailOTPEntry &&
+          (await sendEmailOTPVerificationCodeService(
+            prepareData.email,
+            emailOTP
+          ));
+
+        newMobileOTPEntry &&
+          (await sendMobileOTPVerificationCodeService(
+            prepareData.mobile,
+            mobileOTP
+          ));
+      }
     }
 
     return { email, mobile };

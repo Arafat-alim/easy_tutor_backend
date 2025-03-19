@@ -25,7 +25,6 @@ class OTP {
    */
   static async saveOTP({ userId, otp_code, type, hashed_code, expiresIn = 5 }) {
     try {
-      console.log("save_otp_called_");
       const expiryDate = generateOtpExpiresAt(expiresIn);
       await db("otp_verifications").insert({
         user_id: userId,
@@ -92,7 +91,6 @@ class OTP {
 
   static async update({ userId, otp_code, type, hashed_code, expiresIn = 5 }) {
     try {
-      console.log("update_otp_called_");
       const expiryDate = generateOtpExpiresAt(expiresIn);
       await db("otp_verifications")
         .where({
