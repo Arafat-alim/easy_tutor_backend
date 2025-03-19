@@ -29,7 +29,7 @@ class Auth {
     return db("users")
       .where({
         email,
-        deleted_user: 0,
+        deleted_at: null,
       })
       .update({ role });
   }

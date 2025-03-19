@@ -179,14 +179,8 @@ const handleUpdateMobile = async (req, res) => {
 //! handle add role
 
 const handleUpdateUserRole = async (req, res) => {
-  const { email } = req.user;
-  const { role } = req.body;
-  const prepareData = {
-    email,
-    role,
-  };
   try {
-    const { error } = validateEmailAndRole(prepareData);
+    const { error } = validateEmailAndRole(req.body);
     if (error?.details) {
       return res.status(400).json({
         success: false,
@@ -195,7 +189,7 @@ const handleUpdateUserRole = async (req, res) => {
       });
     }
 
-    await updateUserRole(prepareData);
+    await updateUserRole(req.body);
 
     return res.status(201).json({
       success: true,

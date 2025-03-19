@@ -176,13 +176,12 @@ const updateMobileUser = async (userData) => {
 
 const updateUserRole = async (userData) => {
   let error;
-  const trimmedObj = trimmer(userData);
-  const { email, role } = trimmedObj;
+  const { email, role } = trimmer(userData);
   try {
     const updatedUserCount = await Auth.findByEmailAndUpdateRole(email, role);
 
     if (updatedUserCount === 0) {
-      error = new Error("User not found for update");
+      error = new Error("User not found for update. Please try again later");
       error.status = 404;
       throw error;
     }

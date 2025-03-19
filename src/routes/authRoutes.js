@@ -28,7 +28,7 @@ authRouter.post("/mobile/verify", handleVerifyMobileVerificaitonCode);
 authRouter.post("/email/verification-code", handleSendEmailVerificationCode);
 authRouter.post("/email/verify", handleVerifyEmailVerificaitonCode);
 
-authRouter.patch("/update-role", authMiddleware, handleUpdateUserRole);
+authRouter.patch("/role", handleUpdateUserRole);
 
 authRouter.post("/password/reset-code", handleSendForgotPasswordCodeViaEmail);
 authRouter.patch("/password/reset", handleVerifyForgotPasswordCode);
