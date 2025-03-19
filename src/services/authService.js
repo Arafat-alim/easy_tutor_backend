@@ -385,9 +385,8 @@ const verifyProfileByEmail = async (userData) => {
 };
 
 const sendEmailVerificationCodeService = async (userData) => {
-  const trimmedObj = trimmer(userData);
-  const { email } = trimmedObj;
   let error;
+  const { email } = trimmer(userData);
   try {
     const user = await Auth.findByEmail(email);
     if (!user) {
@@ -395,47 +394,49 @@ const sendEmailVerificationCodeService = async (userData) => {
       error.status = 404;
       throw error;
     }
+    const otpCode = await OTP.generateOTP();
+    const hashedCode = await hmacProcess(otpCode, process.env.JWT_SECRET);
+    const updatedCount = await Auth.findByUserIdAndUpdateEmailVerification(
+      user.id
+    );
 
-    if (user.email_verified) {
-      error = new Error("Email is verified");
+    if (!updatedCount) {
+      error = new Error(
+        "Unexpected error: Failed to update user for email verification"
+      );
       error.status = 400;
       throw error;
     }
+    const existingOTP = await OTP.findUserOTPDetailsByUserIdAndType(
+      user.id,
+      "email"
+    );
 
-    if (user.email) {
-      const codeValue = await generateOtpCode(6);
-      const hashedCodeValue = await hmacProcess(
-        codeValue,
-        process.env.JWT_SECRET
-      );
-
-      const updatedCount = await Auth.findByEmailAndUpdateEmailVerificationCode(
-        user.email,
-        hashedCodeValue
-      );
-
-      if (updatedCount === 0) {
-        error = new Error(
-          "Unexpected error: Failed to send email verification code"
-        );
-        error.status = 400;
-        throw error;
-      }
-
-      const emailOptions = {
-        to: user.email,
-        subject: `Hi ${user.username}, Verify Your Email`,
-        username: user.username,
-        headerText: "Email Verification",
-        bodyText: `Welcome to Easy Tutor! Please use the code below to verify your email address. This code will expire in 15 minutes.`,
-        verificationCode: codeValue,
-        footerText: "Thanks for joining us!",
-      };
-
-      await sendEmail(emailOptions);
+    if (existingOTP.length) {
+      // Updating the existing OTP
+      const response = await OTP.update({
+        userId: user.id,
+        otp_code: otpCode,
+        type: "email",
+        hashed_code: hashedCode,
+        expiresIn: 15,
+      });
+      response &&
+        (await sendEmailOTPVerificationCodeService(user.email, otpCode));
+    } else {
+      // save new otp
+      const response = await OTP.saveOTP({
+        userId: user.id,
+        otp_code: otpCode,
+        type: "email",
+        hashed_code: hashedCode,
+        expiresIn: 15,
+      });
+      response &&
+        (await sendEmailOTPVerificationCodeService(user.email, otpCode));
     }
-    //! hash code
   } catch (err) {
+    console.error("Error in sendEmailVerificationCodeService:", err.message);
     throw err;
   }
 };

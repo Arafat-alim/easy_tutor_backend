@@ -42,8 +42,7 @@ const sendMobileOTPVerificationCodeService = async (mobile) => {
   }
 };
 
-const sendEmailOTPVerificationCodeService = async (email) => {
-  console.log("🚀 ~ sendEmailOTPVerificationCodeService ~ email:", email);
+const sendEmailOTPVerificationCodeService = async (email, otp) => {
   let error;
   if (!email) {
     error = new Error("Email is missing");
@@ -60,29 +59,16 @@ const sendEmailOTPVerificationCodeService = async (email) => {
     }
 
     if (user.email) {
-      const otp = await OTP.generateOTP();
-      console.log("🚀 ~ sendEmailOTPVerificationCodeService ~ otp:", otp);
-      const hashedCodeValue = await hmacProcess(otp, process.env.JWT_SECRET);
-      const prepareData = {
-        userId: user.id,
-        otp_code: otp,
-        hashed_code: hashedCodeValue,
-        expiresIn: 15,
-        type: "email",
+      const emailOptions = {
+        to: email,
+        subject: `Hi ${user.username}, Verify Your Email`,
+        username: user.username,
+        headerText: "Email Verification",
+        bodyText: `Welcome to Easy Tutor! Please use the code below to verify your email address. This code will expire in 15 minutes.`,
+        verificationCode: otp,
+        footerText: "Thanks for joining us!",
       };
-      const result = await OTP.saveOTP(prepareData);
-      if (result) {
-        const emailOptions = {
-          to: email,
-          subject: `Hi ${user.username}, Verify Your Email`,
-          username: user.username,
-          headerText: "Email Verification",
-          bodyText: `Welcome to Easy Tutor! Please use the code below to verify your email address. This code will expire in 15 minutes.`,
-          verificationCode: otp,
-          footerText: "Thanks for joining us!",
-        };
-        enabledEmailOTP === "true" && (await sendEmail(emailOptions));
-      }
+      enabledEmailOTP === "true" && (await sendEmail(emailOptions));
     }
   } catch (err) {
     throw err;

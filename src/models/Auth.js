@@ -100,6 +100,12 @@ class Auth {
       });
   }
 
+  static async findByUserIdAndUpdateEmailVerification(userId) {
+    return db("users").where({ id: userId, deleted_at: null }).update({
+      email_verified: 0,
+    });
+  }
+
   static async findByEmailAndVerify(email) {
     return db("users")
       .where({

@@ -13,7 +13,7 @@ class OTP {
     const max = Math.pow(10, length) - 1;
 
     const otp = crypto.randomInt(min, max + 1).toString();
-    return otp;
+    return otp.toString();
   }
 
   /**
@@ -25,6 +25,7 @@ class OTP {
    */
   static async saveOTP({ userId, otp_code, type, hashed_code, expiresIn = 5 }) {
     try {
+      console.log("save_otp_called_");
       const expiryDate = generateOtpExpiresAt(expiresIn);
       await db("otp_verifications").insert({
         user_id: userId,
@@ -70,6 +71,43 @@ class OTP {
       return true;
     } catch (error) {
       console.error("Error verifying OTP:", error);
+      return false;
+    }
+  }
+
+  /**
+   * Find OTP details using userId and type (It will denote the mobile or email otp).
+   * @param {number} userId The ID of the user.
+   * @param {string} type type of the otp. e.g mobile, email
+   * @returns {Promise<boolean>} A promise that resolves to `true` if the OTP is valid, `false` otherwise.
+   */
+
+  static async findUserOTPDetailsByUserIdAndType(userId, type) {
+    return db("otp_verifications").where({
+      user_id: userId,
+      type: type,
+      deleted_at: null,
+    });
+  }
+
+  static async update({ userId, otp_code, type, hashed_code, expiresIn = 5 }) {
+    try {
+      console.log("update_otp_called_");
+      const expiryDate = generateOtpExpiresAt(expiresIn);
+      await db("otp_verifications")
+        .where({
+          user_id: userId,
+          type: type,
+        })
+        .update({
+          otp_code: otp_code,
+          verified: false,
+          hashed_code: hashed_code,
+          expires_at: expiryDate,
+        });
+      return true;
+    } catch (error) {
+      console.error("Failed to update: ", error);
       return false;
     }
   }
