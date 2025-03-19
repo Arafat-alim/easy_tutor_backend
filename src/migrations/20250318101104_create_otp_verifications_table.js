@@ -11,9 +11,12 @@ exports.up = function (knex) {
       .inTable("users")
       .onDelete("CASCADE")
       .notNullable();
-    table.string("otp_code").notNullable();
-    table.timestamp("expires_at").notNullable();
+    table.string("otp_code", 10).notNullable();
+    table.string("hashed_code", 100).nullable();
+    table.enum("type", ["email", "mobile"]).notNullable();
     table.boolean("verified").defaultTo(false);
+    table.timestamp("expires_at").notNullable();
+    table.timestamp("deleted_at");
     table.timestamps(true, true);
   });
 };

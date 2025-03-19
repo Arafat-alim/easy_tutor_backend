@@ -22,11 +22,7 @@ exports.up = function (knex) {
       .enum("role", ["pending", "student", "teacher", "admin", "institute"])
       .defaultTo("pending");
     table.boolean("email_verified").defaultTo(false);
-    table.string("email_verification_code", 100);
-    table.string("email_verification_code_validation", 100);
     table.boolean("mobile_verified").defaultTo(false);
-    table.string("mobile_verification_code", 100);
-    table.string("mobile_verification_code_validation", 100);
     table.string("forgot_password_code", 100);
     table.string("forgot_password_code_validation", 100);
     table.boolean("deleted_user").defaultTo(false);

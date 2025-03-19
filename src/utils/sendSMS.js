@@ -1,10 +1,17 @@
 const unirest = require("unirest");
 
 const sendSMS = async (mobile, otpCode) => {
+  const enabledMobileOTP = process.env.ENABLED_OTP || "true";
   try {
     if (!mobile || !otpCode) {
-      throw new Error("Mobile and OTPCodes are required");
+      return new Error("Mobile and OTP Codes are required");
     }
+
+    if (enabledMobileOTP !== "true") {
+      console.log("OTP sending is disabled.");
+      return new Error("OTP Cannot be sent due to developer lock from backend");
+    }
+    console.log("Sending OTP...", enabledMobileOTP);
 
     const req = unirest("GET", process.env.SMS_PROVIDER);
 

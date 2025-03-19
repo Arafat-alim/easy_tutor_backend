@@ -4,7 +4,7 @@ const generateAvatarURLUsingEmail = (email) => {
   }
 
   const firstPhase = email.split("@")[0];
-  const symbolicCharacters = [".", "_", "-", "+"]; // Common symbolic characters used in emails
+  const symbolicCharacters = [".", "_", "-", "+"];
   let arr = [];
 
   let delimiterFound = symbolicCharacters.find((char) =>
@@ -18,9 +18,7 @@ const generateAvatarURLUsingEmail = (email) => {
 
   // Ensure safe URL encoding and generate a gravatar-style avatar URL
   const avatarName = arr.join("+");
-  const avatarURL = `https://ui-avatars.com/api/?name=${encodeURIComponent(
-    avatarName
-  )}&background=random&size=240`;
+  const avatarURL = `https://ui-avatars.com/api/?name=${avatarName}&background=random&size=240`;
 
   return avatarURL;
 };

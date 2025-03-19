@@ -4,6 +4,10 @@ class Auth {
     return db("users").insert(user);
   }
 
+  static async findByUserId(userId) {
+    return db("users").where({ id: userId });
+  }
+
   static async findByMobile(mobile) {
     return db("users").where({ mobile, deleted_user: 0 }).first();
   }
@@ -107,6 +111,11 @@ class Auth {
         email_verification_code: null,
         email_verification_code_validation: null,
       });
+  }
+
+  //! google signon
+  static async findUserByGoogleId(google_id) {
+    return db("users").where({ google_id }).first();
   }
 }
 
