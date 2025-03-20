@@ -25,7 +25,10 @@ const {
   verifyEmailService,
 } = require("../services/authService.js");
 const { hideMobileNumber } = require("../utils/hideMobileNumber.js");
-const { refreshTokenService } = require("../services/tokenService.js");
+const {
+  refreshTokenService,
+  signOutService,
+} = require("../services/tokenService.js");
 
 //! handle Signup
 const handleSignUp = async (req, res) => {
@@ -162,10 +165,18 @@ const handleRefreshToken = async (req, res) => {
 //! handle signout
 const handleSignOut = async (req, res) => {
   try {
+    const { refreshToken } = req.body;
+    if (!refreshToken) {
+      return res.status(400).json({
+        success: false,
+        message: "Token is missing",
+      });
+    }
+
+    await signOutService(refreshToken);
     return res.status(200).json({
       success: true,
-      message: "User sign out successfully",
-      data: "Task accompolished",
+      message: "Logged out successfully",
     });
   } catch (err) {
     console.error("Failed to signout: ", err);

@@ -9,7 +9,6 @@ const refreshTokenService = async (userData) => {
   const { refreshToken } = userData;
   try {
     const tokenData = await Token.find(refreshToken);
-    console.log("🚀 ~ refreshTokenService ~ tokenData:", tokenData);
 
     if (!tokenData || new Date(tokenData.expires_at) < new Date()) {
       error = new Error("Invalid token or token is expired");
@@ -49,6 +48,26 @@ const refreshTokenService = async (userData) => {
   }
 };
 
+const signOutService = async (refreshToken) => {
+  let error;
+  try {
+    const tokenData = await Token.find(refreshToken);
+
+    if (!tokenData) {
+      error = new Error("Invalid token");
+      error.code = 400;
+      throw error;
+    }
+    // Delete the refresh token from the database
+    await Token.delete(refreshToken);
+    return true;
+  } catch (err) {
+    console.error("Error occured: ", err);
+    throw err;
+  }
+};
+
 module.exports = {
   refreshTokenService,
+  signOutService,
 };

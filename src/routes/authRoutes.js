@@ -19,7 +19,7 @@ const authRouter = express.Router();
 
 authRouter.post("/register", handleSignUp);
 authRouter.post("/login", handleSignIn);
-authRouter.get("/logout", handleSignOut);
+authRouter.post("/logout", handleSignOut);
 authRouter.post("/refresh", handleRefreshToken);
 authRouter.get("/profile", authMiddleware, handleUserProfile);
 

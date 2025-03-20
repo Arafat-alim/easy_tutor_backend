@@ -16,6 +16,10 @@ class Token {
     });
   }
 
+  static async delete(refreshToken) {
+    return await db("tokens").where({ refresh_token: refreshToken }).del();
+  }
+
   static async find(refreshToken) {
     return db("tokens").where({ refresh_token: refreshToken }).first();
   }
