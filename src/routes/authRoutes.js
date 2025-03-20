@@ -11,6 +11,7 @@ const {
   handleSendEmailVerificationCode,
   handleSendForgotPasswordCodeViaEmail,
   handleVerifyEmailVerificaitonCode,
+  handleRefreshToken,
 } = require("../controllers/authController.js");
 const authMiddleware = require("../middlewares/authMiddleware.js");
 
@@ -19,6 +20,7 @@ const authRouter = express.Router();
 authRouter.post("/register", handleSignUp);
 authRouter.post("/login", handleSignIn);
 authRouter.get("/logout", handleSignOut);
+authRouter.post("/refresh", handleRefreshToken);
 authRouter.get("/profile", authMiddleware, handleUserProfile);
 
 // authRouter.patch("/add-mobile", handleUpdateMobile);

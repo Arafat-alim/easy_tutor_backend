@@ -1,11 +1,11 @@
 const Jwt = require("jsonwebtoken");
 
-const generateJWTToken = async (userData, expiresIn) => {
+const generateJWTToken = async (payload, expiresIn) => {
   try {
     if (!process.env.JWT_SECRET) {
       throw new Error("JWT Secret key is missing from Env variables");
     }
-    const token = Jwt.sign(userData, process.env.JWT_SECRET, {
+    const token = Jwt.sign(payload, process.env.JWT_SECRET, {
       expiresIn,
     });
     return token;

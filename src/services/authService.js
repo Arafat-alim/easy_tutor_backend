@@ -134,7 +134,7 @@ const signInUser = async (userData) => {
     }
 
     const payload = {
-      id: user.id,
+      userId: user.id,
     };
 
     //! Return token and sanitized user profile

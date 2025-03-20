@@ -25,6 +25,7 @@ const {
   verifyEmailService,
 } = require("../services/authService.js");
 const { hideMobileNumber } = require("../utils/hideMobileNumber.js");
+const { refreshTokenService } = require("../services/tokenService.js");
 
 //! handle Signup
 const handleSignUp = async (req, res) => {
@@ -120,6 +121,40 @@ const handleSignIn = async (req, res) => {
       success: false,
       message: "Failed to sign in",
       error: err.message,
+    });
+  }
+};
+
+//! handle token
+
+const handleRefreshToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    console.log("🚀 ~ handleRefreshToken ~ refreshToken:", refreshToken);
+    if (!refreshToken) {
+      return res.status(400).json({
+        success: false,
+        message: "Refresh token is missing",
+      });
+    }
+
+    const { newRefreshToken, newAccessToken } = await refreshTokenService(
+      req.body
+    );
+
+    return res.status(201).json({
+      success: true,
+      message: "Token generated",
+      tokens: {
+        access: newAccessToken,
+        refresh: newRefreshToken,
+      },
+    });
+  } catch (error) {
+    return res.status(error.code || 500).json({
+      success: false,
+      message: "Failed to handle token",
+      error: error.message,
     });
   }
 };
@@ -434,4 +469,5 @@ module.exports = {
   handleUserProfile,
   handleSendEmailVerificationCode,
   handleVerifyEmailVerificaitonCode,
+  handleRefreshToken,
 };
