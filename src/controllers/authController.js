@@ -133,7 +133,6 @@ const handleSignIn = async (req, res) => {
 const handleRefreshToken = async (req, res) => {
   try {
     const { refreshToken } = req.body;
-    console.log("🚀 ~ handleRefreshToken ~ refreshToken:", refreshToken);
     if (!refreshToken) {
       return res.status(400).json({
         success: false,
@@ -381,24 +380,16 @@ const handleVerifyMobileVerificaitonCode = async (req, res) => {
 
 const handleUserProfile = async (req, res) => {
   try {
-    const { email } = req.user;
-    const { error } = await validateEmail({ email });
-    if (error?.details) {
+    const { user_id } = req.user;
+
+    if (!user_id) {
       return res.status(400).json({
         success: false,
-        message: "Validation Error",
-        error: error?.details.map((err) => err.message),
+        message: "User Id is missing",
       });
     }
 
-    const user = await verifyProfileByEmail(email);
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "No user found",
-      });
-    }
+    const user = await verifyProfileByEmail(user_id);
 
     return res.status(200).json({
       success: false,
@@ -459,9 +450,32 @@ const handleVerifyEmailVerificaitonCode = async (req, res) => {
       message: "Email is verified!",
     });
   } catch (err) {
-    return res.status(err.status || 500).json({
+    return res.status(err.code || 500).json({
       success: false,
       message: "Failed to Verify your email address, please try again later",
+      error: err.message,
+    });
+  }
+};
+
+const handleGoogleSignon = async (req, res) => {
+  try {
+    const { id_token } = req.body;
+    if (!id_token) {
+      return res.status(400).json({
+        success: false,
+        message: "Token is missing",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Sign In Successfully!",
+    });
+  } catch (err) {
+    return res.status(err.code || 500).json({
+      success: false,
+      message: "Failed to Google Sign on, please try again later",
       error: err.message,
     });
   }
@@ -481,4 +495,5 @@ module.exports = {
   handleSendEmailVerificationCode,
   handleVerifyEmailVerificaitonCode,
   handleRefreshToken,
+  handleGoogleSignon,
 };

@@ -12,6 +12,7 @@ const {
   handleSendForgotPasswordCodeViaEmail,
   handleVerifyEmailVerificaitonCode,
   handleRefreshToken,
+  handleGoogleSignon,
 } = require("../controllers/authController.js");
 const authMiddleware = require("../middlewares/authMiddleware.js");
 
@@ -22,6 +23,8 @@ authRouter.post("/login", handleSignIn);
 authRouter.post("/logout", handleSignOut);
 authRouter.post("/refresh", handleRefreshToken);
 authRouter.get("/profile", authMiddleware, handleUserProfile);
+authRouter.post("/google/signon", handleGoogleSignon);
+// authRouter.post("/google/refresh", handleGoogleRefresh);
 
 // authRouter.patch("/add-mobile", handleUpdateMobile);
 authRouter.post("/mobile/verification-code", handleSendMobileVerificationCode);

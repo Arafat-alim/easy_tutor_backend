@@ -74,7 +74,7 @@ class Auth {
     });
   }
 
-  static async findByEmailAndGetSelectiveFields(email) {
+  static async findByUserIdAndGetSelectiveFields(user_id) {
     return db("users")
       .select(
         "id",
@@ -84,9 +84,10 @@ class Auth {
         "email_verified",
         "mobile_verified"
       )
-      .where({ email, deleted_user: 0 })
+      .where({ id: user_id, deleted_at: null })
       .first();
   }
+
   static async findByEmailAndUpdateEmailVerificationCode(email, hashedCode) {
     return db("users")
       .where({

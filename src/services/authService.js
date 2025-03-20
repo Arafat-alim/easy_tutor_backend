@@ -134,7 +134,7 @@ const signInUser = async (userData) => {
     }
 
     const payload = {
-      userId: user.id,
+      user_id: user.id,
     };
 
     //! Return token and sanitized user profile
@@ -455,10 +455,10 @@ const validateMobileVerificationCodeService = async (userData) => {
   }
 };
 
-const verifyProfileByEmail = async (userData) => {
+const verifyProfileByEmail = async (user_id) => {
   let error;
   try {
-    const user = await Auth.findByEmailAndGetSelectiveFields(userData);
+    const user = await Auth.findByUserIdAndGetSelectiveFields(user_id);
 
     if (!user) {
       error = new Error("User not found");
