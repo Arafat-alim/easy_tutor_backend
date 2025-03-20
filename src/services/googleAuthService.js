@@ -9,11 +9,16 @@ const {
   generateAvatarURLUsingEmail,
 } = require("../utils/generateAvatarURLUsingEmail.js");
 
-const googleSignInService = async (googleToken) => {
+const googleSignInService = async (userData) => {
   let error;
   try {
-    const payload = await verifyGoogleToken(googleToken);
-    console.log("🚀 ~ googleSignInService ~ payload:", payload);
+    const payload = userData;
+
+    if (!payload) {
+      error = new Error("Payload not found");
+      error.status = 400;
+      throw error;
+    }
     const { email } = payload;
 
     const user = await Auth.findByEmail(email);
@@ -52,12 +57,14 @@ const googleSignInService = async (googleToken) => {
   }
 };
 
-const googleSignUpService = async (googleToken) => {
+const googleSignUpService = async (userData) => {
+  let error;
   try {
-    // Verify Google token
-    const payload = await verifyGoogleToken(googleToken);
+    const payload = userData;
     if (!payload) {
-      throw new Error("Invalid Google token.");
+      error = new Error("Payload not found");
+      error.status = 400;
+      throw error;
     }
 
     const { email, name, given_name, family_name, picture } = payload;
@@ -74,7 +81,7 @@ const googleSignUpService = async (googleToken) => {
     const username = name.replace(/\s+/g, "_").toLowerCase();
     const avatarUrl = picture || generateAvatarURLUsingEmail(email);
 
-    const userData = {
+    const userInfo = {
       email,
       username,
       first_name: given_name,
@@ -85,13 +92,13 @@ const googleSignUpService = async (googleToken) => {
       mobile_verified: false,
     };
 
-    const user = await Auth.create(userData);
+    const user = await Auth.create(userInfo);
     if (!user || user.length === 0) {
       throw new Error("User creation failed.");
     }
 
     //! find recently added user in the database usign email
-    const recentlyAddedUser = await Auth.findByEmail(userData.email);
+    const recentlyAddedUser = await Auth.findByEmail(userInfo.email);
 
     if (!recentlyAddedUser) {
       error = new Error("Recently Added user not found, try later");

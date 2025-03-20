@@ -464,16 +464,8 @@ const handleVerifyEmailVerificaitonCode = async (req, res) => {
 
 const handleGoogleSignin = async (req, res) => {
   try {
-    const { id_token } = req.body;
-    if (!id_token || typeof id_token !== "string") {
-      return res.status(400).json({
-        success: false,
-        message: "Token is missing",
-      });
-    }
-
     const { accessToken, refreshToken, profile } = await googleSignInService(
-      id_token
+      req.payload
     );
 
     return res.status(200).json({
@@ -502,18 +494,8 @@ const handleGoogleSignin = async (req, res) => {
 
 const handleGoogleSignup = async (req, res) => {
   try {
-    const { googleToken } = req.body;
-    console.log("🚀 ~ handleGoogleSignup ~ id_token:", googleToken);
-
-    if (!googleToken || typeof googleToken !== "string") {
-      return res.status(400).json({
-        success: false,
-        message: "Google Token is missing",
-      });
-    }
-
     const { accessToken, refreshToken, profile } = await googleSignUpService(
-      googleToken
+      req.payload
     );
     return res.status(201).json({
       success: true,

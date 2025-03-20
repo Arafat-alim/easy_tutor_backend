@@ -16,6 +16,7 @@ const {
   handleGoogleSignup,
 } = require("../controllers/authController.js");
 const authMiddleware = require("../middlewares/authMiddleware.js");
+const verifyGoogleTokenMiddleware = require("../middlewares/verifyGoogleTokenMiddleware.js");
 
 const authRouter = express.Router();
 
@@ -24,8 +25,16 @@ authRouter.post("/login", handleSignIn);
 authRouter.post("/logout", handleSignOut);
 authRouter.post("/refresh", handleRefreshToken);
 authRouter.get("/profile", authMiddleware, handleUserProfile);
-authRouter.post("/google/signin", handleGoogleSignin);
-authRouter.post("/google/signup", handleGoogleSignup);
+authRouter.post(
+  "/google/signin",
+  verifyGoogleTokenMiddleware,
+  handleGoogleSignin
+);
+authRouter.post(
+  "/google/signup",
+  verifyGoogleTokenMiddleware,
+  handleGoogleSignup
+);
 // authRouter.post("/google/refresh", handleGoogleRefresh);
 
 // authRouter.patch("/add-mobile", handleUpdateMobile);
