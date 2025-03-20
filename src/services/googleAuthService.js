@@ -5,6 +5,9 @@ const {
 } = require("../utils/generateTokenExpirationDate.js");
 const Token = require("../models/Token.js");
 const { generateJWTToken } = require("../utils/jwtTokenUtility.js");
+const {
+  generateAvatarURLUsingEmail,
+} = require("../utils/generateAvatarURLUsingEmail.js");
 
 const googleSignInService = async (googleToken) => {
   let error;
@@ -49,6 +52,86 @@ const googleSignInService = async (googleToken) => {
   }
 };
 
+const googleSignUpService = async (googleToken) => {
+  try {
+    // Verify Google token
+    const payload = await verifyGoogleToken(googleToken);
+    if (!payload) {
+      throw new Error("Invalid Google token.");
+    }
+
+    const { email, name, given_name, family_name, picture } = payload;
+
+    // Check if user already exists
+    const existingUser = await Auth.findByEmail(email);
+    if (existingUser) {
+      const error = new Error("User already exists. Please sign in.");
+      error.status = 409;
+      throw error;
+    }
+
+    // Create new user
+    const username = name.replace(/\s+/g, "_").toLowerCase();
+    const avatarUrl = picture || generateAvatarURLUsingEmail(email);
+
+    const userData = {
+      email,
+      username,
+      first_name: given_name,
+      last_name: family_name,
+      password: null, // No password for Google sign-up
+      avatar: avatarUrl,
+      email_verified: true,
+      mobile_verified: false,
+    };
+
+    const user = await Auth.create(userData);
+    if (!user || user.length === 0) {
+      throw new Error("User creation failed.");
+    }
+
+    //! find recently added user in the database usign email
+    const recentlyAddedUser = await Auth.findByEmail(userData.email);
+
+    if (!recentlyAddedUser) {
+      error = new Error("Recently Added user not found, try later");
+      error.status = 404;
+      throw error;
+    }
+
+    // Generate tokens
+    const accessToken = await generateJWTToken(
+      { user_id: recentlyAddedUser.id },
+      "15m"
+    );
+    const refreshToken = await generateJWTToken(
+      { user_id: recentlyAddedUser.id },
+      "7d"
+    );
+
+    // Save refresh token with expiration
+    const expiresAt = generateTokenExpirationDate();
+    await Token.save(recentlyAddedUser.id, refreshToken, expiresAt);
+
+    // Prepare user profile
+    const profile = {
+      id: recentlyAddedUser.id,
+      email: recentlyAddedUser.email,
+      mobile: recentlyAddedUser.mobile,
+      avatar: recentlyAddedUser.avatar,
+      role: recentlyAddedUser.role,
+      mobile_verified: recentlyAddedUser.mobile_verified,
+      email_verified: recentlyAddedUser.email_verified,
+    };
+
+    return { accessToken, refreshToken, profile };
+  } catch (err) {
+    console.error("Error occurred in googleSignUpService: ", err);
+    throw err;
+  }
+};
+
 module.exports = {
   googleSignInService,
+  googleSignUpService,
 };

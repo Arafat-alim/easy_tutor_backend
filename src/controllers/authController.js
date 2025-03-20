@@ -29,7 +29,10 @@ const {
   refreshTokenService,
   signOutService,
 } = require("../services/tokenService.js");
-const { googleSignInService } = require("../services/googleAuthService.js");
+const {
+  googleSignInService,
+  googleSignUpService,
+} = require("../services/googleAuthService.js");
 
 //! handle Signup
 const handleSignUp = async (req, res) => {
@@ -488,9 +491,68 @@ const handleGoogleSignin = async (req, res) => {
         error: "Google token has expired. Please sign in again.",
       });
     }
+
     return res.status(err.code || 500).json({
       success: false,
       message: "Failed to Google Sign on, please signin again",
+      error: err.message,
+    });
+  }
+};
+
+const handleGoogleSignup = async (req, res) => {
+  try {
+    const { googleToken } = req.body;
+    console.log("🚀 ~ handleGoogleSignup ~ id_token:", googleToken);
+
+    if (!googleToken || typeof googleToken !== "string") {
+      return res.status(400).json({
+        success: false,
+        message: "Google Token is missing",
+      });
+    }
+
+    const { accessToken, refreshToken, profile } = await googleSignUpService(
+      googleToken
+    );
+    return res.status(201).json({
+      success: true,
+      message: "Sign up successfully",
+      access: accessToken,
+      refresh: refreshToken,
+      profile: profile,
+    });
+  } catch (err) {
+    if (err.code === "ER_DUP_ENTRY") {
+      const { email, mobile } = req.body;
+
+      let errorMessage = "Duplicate entry detected: ";
+
+      if (err.sqlMessage?.includes(email)) {
+        errorMessage += "Email is already registered.";
+      } else if (err.sqlMessage?.includes(mobile)) {
+        errorMessage += "Mobile number is already registered.";
+      } else {
+        errorMessage =
+          "The email address or mobile number you entered is already registered with us.";
+      }
+
+      return res.status(409).json({
+        // Use 409 Conflict status code
+        success: false,
+        message: errorMessage,
+      });
+    }
+    if (err.message.includes("Token used too late")) {
+      return res.status(401).json({
+        success: false,
+        message: "Please sign in again.",
+        error: "Google token has expired. Please sign in again.",
+      });
+    }
+    return res.status(err.status || 500).json({
+      success: false,
+      message: "Failed to Google sign up. Try again later",
       error: err.message,
     });
   }
@@ -511,4 +573,5 @@ module.exports = {
   handleVerifyEmailVerificaitonCode,
   handleRefreshToken,
   handleGoogleSignin,
+  handleGoogleSignup,
 };
