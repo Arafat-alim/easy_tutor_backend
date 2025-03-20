@@ -246,7 +246,7 @@ const sendForgotPasswordCodeViaEmailService = async (userData) => {
         verificationCode: otpCode,
       };
 
-      enabledEmailOTP === "false" && (await sendEmail(emailOptions));
+      enabledEmailOTP === "true" && (await sendEmail(emailOptions));
     }
     return true;
   } catch (err) {

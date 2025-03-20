@@ -29,6 +29,7 @@ const {
   refreshTokenService,
   signOutService,
 } = require("../services/tokenService.js");
+const { googleSignInService } = require("../services/googleAuthService.js");
 
 //! handle Signup
 const handleSignUp = async (req, res) => {
@@ -458,24 +459,38 @@ const handleVerifyEmailVerificaitonCode = async (req, res) => {
   }
 };
 
-const handleGoogleSignon = async (req, res) => {
+const handleGoogleSignin = async (req, res) => {
   try {
     const { id_token } = req.body;
-    if (!id_token) {
+    if (!id_token || typeof id_token !== "string") {
       return res.status(400).json({
         success: false,
         message: "Token is missing",
       });
     }
 
+    const { accessToken, refreshToken, profile } = await googleSignInService(
+      id_token
+    );
+
     return res.status(200).json({
       success: true,
       message: "Sign In Successfully!",
+      access: accessToken,
+      refresh: refreshToken,
+      profile: profile,
     });
   } catch (err) {
+    if (err.message.includes("Token used too late")) {
+      return res.status(401).json({
+        success: false,
+        message: "Please sign in again.",
+        error: "Google token has expired. Please sign in again.",
+      });
+    }
     return res.status(err.code || 500).json({
       success: false,
-      message: "Failed to Google Sign on, please try again later",
+      message: "Failed to Google Sign on, please signin again",
       error: err.message,
     });
   }
@@ -495,5 +510,5 @@ module.exports = {
   handleSendEmailVerificationCode,
   handleVerifyEmailVerificaitonCode,
   handleRefreshToken,
-  handleGoogleSignon,
+  handleGoogleSignin,
 };
