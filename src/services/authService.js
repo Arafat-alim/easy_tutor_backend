@@ -1,16 +1,14 @@
 const generateUsername = require("../utils/generateUsername.js");
 const Auth = require("../models/Auth.js");
 const OTP = require("../models/OTP.js");
-const generateOtpCode = require("../utils/generateOtpCode.js");
 const {
   doHash,
   hmacProcess,
   doHashValidation,
 } = require("../utils/hashing.js");
-const { generateToken } = require("../utils/jwtTokenUtility.js");
+const { generateJWTToken } = require("../utils/jwtTokenUtility.js");
 const trimmer = require("../utils/trimmer.js");
 const sendEmail = require("../utils/sendMail.js");
-const { sendSMS } = require("../utils/sendSMS.js");
 const {
   generateAvatarURLUsingEmail,
 } = require("../utils/generateAvatarURLUsingEmail.js");
@@ -19,6 +17,10 @@ const {
   sendEmailOTPVerificationCodeService,
 } = require("./OTPService.js");
 const { isOTPExpired } = require("../utils/isOTPExpired.js");
+const Token = require("../models/Token.js");
+const {
+  generateTokenExpirationDate,
+} = require("../utils/generateTokenExpirationDate.js");
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const enabledEmailOTP = process.env.ENABLED_OTP_EMAIL || "true";
@@ -52,7 +54,7 @@ const signUpUser = async (userData) => {
       const emailOTP = await OTP.generateOTP();
       const mobileOTP = await OTP.generateOTP();
       const hashedEmailOTP = await hmacProcess(emailOTP, JWT_SECRET);
-      const hashedMobileOTP = await hmacProcess(emailOTP, JWT_SECRET);
+      const hashedMobileOTP = await hmacProcess(mobileOTP, JWT_SECRET);
       const existingUser = await Auth.findByEmail(prepareData.email);
       if (existingUser) {
         const newEmailOTPEntry = await OTP.saveOTP({
@@ -110,19 +112,29 @@ const signInUser = async (userData) => {
       throw error;
     }
 
-    const matched = await doHashValidation(password, user.password);
+    if (!user.email_verified || !user.mobile_verified) {
+      let message = "Please verify";
+      if (!user.email_verified) {
+        message += " your email";
+      }
+      if (!user.mobile_verified) {
+        if (!user.email_verified) message += " and";
+        message += " your mobile";
+      }
+      const error = new Error(message);
+      error.status = 403;
+      throw error;
+    }
 
+    const matched = await doHashValidation(password, user.password);
     if (!matched) {
       error = new Error("Wrong Credentials, password is incorrect");
       error.status = 400;
       throw error;
     }
+
     const payload = {
       id: user.id,
-      email: user.email,
-      role: user.role,
-      mobile_verified: user.mobile_verified,
-      email_verified: user.email_verified,
     };
 
     //! Return token and sanitized user profile
@@ -135,9 +147,16 @@ const signInUser = async (userData) => {
       mobile_verified: user.mobile_verified,
       email_verified: user.email_verified,
     };
-    const accessToken = await generateToken(payload);
 
-    return { accessToken, profile };
+    const accessToken = await generateJWTToken(payload, "15m");
+    const refreshToken = await generateJWTToken(payload, "7d");
+
+    //  saee refresh token to "token" table
+    const expiresAt = generateTokenExpirationDate();
+    const saveToken = await Token.save(user.id, refreshToken, expiresAt);
+    if (saveToken[0]) {
+      return { accessToken, profile, refreshToken };
+    }
   } catch (err) {
     throw err;
   }

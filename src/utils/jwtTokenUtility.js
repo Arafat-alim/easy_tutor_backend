@@ -1,14 +1,12 @@
 const Jwt = require("jsonwebtoken");
 
-const generateToken = async (userData) => {
+const generateJWTToken = async (userData, expiresIn) => {
   try {
-    if (!process.env.JWT_EXPIRES_IN) {
-      throw new Error("JWT Expired key is missing from Env variables");
-    } else if (!process.env.JWT_SECRET) {
+    if (!process.env.JWT_SECRET) {
       throw new Error("JWT Secret key is missing from Env variables");
     }
     const token = Jwt.sign(userData, process.env.JWT_SECRET, {
-      expiresIn: process.env.JWT_EXPIRES_IN,
+      expiresIn,
     });
     return token;
   } catch (err) {
@@ -30,6 +28,6 @@ const validateToken = async (token) => {
 };
 
 module.exports = {
-  generateToken,
+  generateJWTToken,
   validateToken,
 };

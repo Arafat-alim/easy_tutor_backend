@@ -89,14 +89,15 @@ const handleSignIn = async (req, res) => {
         error: error?.details.map((err) => err.message),
       });
     }
-    const { accessToken, profile } = await signInUser(req.body);
+    const { accessToken, profile, refreshToken } = await signInUser(req.body);
 
     return res.status(200).json({
       success: true,
       message: "User sign in successfully",
       profile,
-      token: {
+      tokens: {
         access: accessToken,
+        refresh: refreshToken,
       },
     });
   } catch (err) {
