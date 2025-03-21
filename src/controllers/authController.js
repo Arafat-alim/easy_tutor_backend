@@ -111,7 +111,7 @@ const handleSignIn = async (req, res) => {
   } catch (err) {
     console.error("Failed to signin: ", err);
 
-    if (err.message.includes("Hashed password is missing.")) {
+    if (err.message.includes("Hashed password is missing")) {
       return res.status(400).json({
         success: false,
         message: "Wrong Credentials",
