@@ -43,6 +43,15 @@ class Auth {
       .update({ mobile });
   }
 
+  static async findByUserIdAndAddMobile(userId, mobile) {
+    return db("users")
+      .where({
+        id: userId,
+        deleted_at: null,
+      })
+      .update({ mobile });
+  }
+
   static async findByEmailAndUpdateForgotPasswordCode(email, hashedCode) {
     return db("users").where({ email, deleted_at: null }).update({
       forgot_password_code: hashedCode,

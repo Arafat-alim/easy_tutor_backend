@@ -178,8 +178,8 @@ const updateMobileUser = async (userData) => {
       throw new Error(`${mobile} number is already added.`);
     }
 
-    const updatedUserCount = await Auth.findByEmailAndUpdateMobile(
-      email,
+    const updatedUserCount = await Auth.findByUserIdAndAddMobile(
+      user.id,
       mobile
     );
 

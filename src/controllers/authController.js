@@ -110,6 +110,13 @@ const handleSignIn = async (req, res) => {
     });
   } catch (err) {
     console.error("Failed to signin: ", err);
+
+    if (err.message.includes("Hashed password is missing.")) {
+      return res.status(400).json({
+        success: false,
+        message: "Wrong Credentials",
+      });
+    }
     if (err.status === 301) {
       return res.status(err.status).json({
         success: false,
@@ -192,7 +199,7 @@ const handleSignOut = async (req, res) => {
 };
 
 //! handle add mobile
-const handleUpdateMobile = async (req, res) => {
+const handleAddMobile = async (req, res) => {
   try {
     const { error } = validateAddMobile(req.body);
     if (error?.details) {
@@ -207,7 +214,7 @@ const handleUpdateMobile = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: `User - ${email}, mobile updated to - ${mobile}`,
+      message: "Mobile number is added",
     });
   } catch (err) {
     console.error("Failed to add mobile number: ", err);
@@ -544,7 +551,6 @@ module.exports = {
   handleSignUp,
   handleSignIn,
   handleSignOut,
-  handleUpdateMobile,
   handleUpdateUserRole,
   handleSendForgotPasswordCodeViaEmail,
   handleVerifyForgotPasswordCode,
@@ -556,4 +562,5 @@ module.exports = {
   handleRefreshToken,
   handleGoogleSignin,
   handleGoogleSignup,
+  handleAddMobile,
 };
