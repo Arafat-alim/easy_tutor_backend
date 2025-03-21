@@ -103,10 +103,8 @@ const handleSignIn = async (req, res) => {
       success: true,
       message: "User sign in successfully",
       profile,
-      tokens: {
-        access: accessToken,
-        refresh: refreshToken,
-      },
+      access: accessToken,
+      refresh: refreshToken,
     });
   } catch (err) {
     console.error("Failed to signin: ", err);
@@ -473,15 +471,15 @@ const handleVerifyEmailVerificaitonCode = async (req, res) => {
 const handleGoogleSignin = async (req, res) => {
   try {
     const { accessToken, refreshToken, profile } = await googleSignInService(
-      req.payload
+      req.user
     );
 
     return res.status(200).json({
       success: true,
       message: "Sign In Successfully!",
+      profile: profile,
       access: accessToken,
       refresh: refreshToken,
-      profile: profile,
     });
   } catch (err) {
     if (err.message.includes("Token used too late")) {
@@ -503,14 +501,14 @@ const handleGoogleSignin = async (req, res) => {
 const handleGoogleSignup = async (req, res) => {
   try {
     const { accessToken, refreshToken, profile } = await googleSignUpService(
-      req.payload
+      req.user
     );
     return res.status(201).json({
       success: true,
       message: "Sign up successfully",
+      profile: profile,
       access: accessToken,
       refresh: refreshToken,
-      profile: profile,
     });
   } catch (err) {
     if (err.code === "ER_DUP_ENTRY") {

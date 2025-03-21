@@ -23,7 +23,7 @@ const verifyGoogleTokenMiddleware = async (req, res, next) => {
     const payload = await verifyGoogleToken(googleToken);
 
     // Attach the payload to the request object
-    req.payload = payload;
+    req.user = payload;
 
     // Proceed to the next middleware or route handler
     next();
