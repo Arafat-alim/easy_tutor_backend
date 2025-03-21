@@ -1,7 +1,4 @@
 const Token = require("../models/Token");
-const {
-  generateTokenExpirationDate,
-} = require("../utils/generateTokenExpirationDate");
 const { generateJWTToken } = require("../utils/jwtTokenUtility");
 
 const refreshTokenService = async (userData) => {
@@ -16,32 +13,38 @@ const refreshTokenService = async (userData) => {
       throw error;
     }
 
+    //! Generate tokens
+    const prepareData = {
+      user_id: tokenData.id,
+      role: tokenData.role,
+      email: tokenData.email,
+      is_blocked: tokenData.is_blocked,
+    };
+
     //! generate a new access token
     const newAccessToken = await generateJWTToken(
-      { userId: tokenData.user_id },
-      "15m"
-    );
-    const newRefreshToken = await generateJWTToken(
-      { userId: tokenData.user_id },
-      "7d"
+      prepareData,
+      access_token_expiresIn
     );
 
-    //! save new refresh token into the database
-    const expiredAt = generateTokenExpirationDate();
-    const counted = await Token.update(
-      refreshToken,
-      newRefreshToken,
-      expiredAt
-    );
+    // const newRefreshToken = await generateJWTToken(prepareData, "7d");
 
-    if (!counted) {
-      error = new Error(
-        "Something went wrong while generating the refresh token"
-      );
-      error.code = 400;
-      throw error;
-    }
-    return { newAccessToken, newRefreshToken };
+    // //! save new refresh token into the database
+    // const expiredAt = generateTokenExpirationDate();
+    // const counted = await Token.update(
+    //   refreshToken,
+    //   newRefreshToken,
+    //   expiredAt
+    // );
+
+    // if (!counted) {
+    //   error = new Error(
+    //     "Something went wrong while generating the refresh token"
+    //   );
+    //   error.code = 400;
+    //   throw error;
+    // }
+    return { newAccessToken };
   } catch (error) {
     console.error("Error occured: ", error);
     throw error;

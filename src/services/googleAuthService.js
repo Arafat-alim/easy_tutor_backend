@@ -8,6 +8,9 @@ const { generateJWTToken } = require("../utils/jwtTokenUtility.js");
 const {
   generateAvatarURLUsingEmail,
 } = require("../utils/generateAvatarURLUsingEmail.js");
+const access_token_expiresIn = process.env.JWT_ACCESS_TOKEN_EXPIRES_IN || "1hr";
+const refresh_token_expiresIn =
+  process.env.JWT_REFRESH_TOKEN_EXPIRES_IN || "7d";
 
 const googleSignInService = async (userData) => {
   let error;
@@ -32,9 +35,19 @@ const googleSignInService = async (userData) => {
     //! Generate tokens
     const prepareData = {
       user_id: user.id,
+      role: user.role,
+      email: user.email,
+      is_blocked: user.is_blocked,
     };
-    const accessToken = await generateJWTToken(prepareData, "15m");
-    const refreshToken = await generateJWTToken(prepareData, "7d");
+
+    const accessToken = await generateJWTToken(
+      prepareData,
+      access_token_expiresIn
+    );
+    const refreshToken = await generateJWTToken(
+      prepareData,
+      refresh_token_expiresIn
+    );
 
     //! save refresh token
 
@@ -67,7 +80,7 @@ const googleSignUpService = async (userData) => {
       throw error;
     }
 
-    const { email, name, given_name, family_name, picture } = payload;
+    const { email, name, picture } = payload;
 
     // Check if user already exists
     const existingUser = await Auth.findByEmail(email);
@@ -84,8 +97,7 @@ const googleSignUpService = async (userData) => {
     const userInfo = {
       email,
       username,
-      first_name: given_name,
-      last_name: family_name,
+      full_name: name,
       password: null, // No password for Google sign-up
       avatar: avatarUrl,
       email_verified: true,
@@ -106,14 +118,22 @@ const googleSignUpService = async (userData) => {
       throw error;
     }
 
+    //! Generate tokens
+    const prepareData = {
+      user_id: recentlyAddedUser.id,
+      role: recentlyAddedUser.role,
+      email: recentlyAddedUser.email,
+      is_blocked: recentlyAddedUser.is_blocked,
+    };
+
     // Generate tokens
     const accessToken = await generateJWTToken(
-      { user_id: recentlyAddedUser.id },
-      "15m"
+      prepareData,
+      access_token_expiresIn
     );
     const refreshToken = await generateJWTToken(
-      { user_id: recentlyAddedUser.id },
-      "7d"
+      prepareData,
+      refresh_token_expiresIn
     );
 
     // Save refresh token with expiration

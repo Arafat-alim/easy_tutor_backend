@@ -24,7 +24,7 @@ exports.up = function (knex) {
     table.boolean("mobile_verified").defaultTo(false);
     table.string("forgot_password_code", 100);
     table.string("forgot_password_code_validation", 100);
-    table.boolean("is_block").defaultTo(false);
+    table.boolean("is_blocked").defaultTo(false);
     table.timestamp("deleted_at").nullable().index(); // Added deleted_at column
     table.timestamps(true, true); // Adds created_at and updated_at columns
   });

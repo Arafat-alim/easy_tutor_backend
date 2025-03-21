@@ -9,7 +9,7 @@ class Auth {
   }
 
   static async findByMobile(mobile) {
-    return db("users").where({ mobile, deleted_user: 0 }).first();
+    return db("users").where({ mobile, deleted_at: null }).first();
   }
 
   static async findByEmail(email) {
@@ -20,7 +20,7 @@ class Auth {
     return db("users")
       .where({
         mobile,
-        deleted_user: 0,
+        deleted_at: null,
       })
       .update({ role });
   }
@@ -38,7 +38,7 @@ class Auth {
     return db("users")
       .where({
         email,
-        deleted_user: 0,
+        deleted_at: null,
       })
       .update({ mobile });
   }
@@ -60,7 +60,7 @@ class Auth {
   }
 
   static async findByUserIdAndUpdatePassword(userId, password) {
-    return db("users").where({ id: userId, deleted_user: 0 }).update({
+    return db("users").where({ id: userId, deleted_at: null }).update({
       password,
       forgot_password_code: null,
       forgot_password_code_validation: null,
@@ -68,7 +68,7 @@ class Auth {
   }
 
   static async findByMobileAndUpdateMobileVerificationCode(mobile, hashedCode) {
-    return db("users").where({ mobile, deleted_user: 0 }).update({
+    return db("users").where({ mobile, deleted_at: null }).update({
       mobile_verification_code: hashedCode,
       mobile_verification_code_validation: Date.now(),
       mobile_verified: 0,
@@ -76,7 +76,7 @@ class Auth {
   }
 
   static async findByEmailAndVerifyOTP(mobile) {
-    return db("users").where({ mobile, deleted_user: 0 }).update({
+    return db("users").where({ mobile, deleted_at: null }).update({
       mobile_verified: 1,
       mobile_verification_code: null,
       mobile_verification_code_validation: null,
@@ -102,7 +102,7 @@ class Auth {
       .where({
         email,
         email_verified: 0,
-        deleted_user: 0,
+        deleted_at: null,
       })
       .update({
         email_verification_code: hashedCode,
@@ -131,7 +131,7 @@ class Auth {
     return db("users")
       .where({
         email,
-        deleted_user: 0,
+        deleted_at: null,
       })
       .update({
         email_verified: 1,

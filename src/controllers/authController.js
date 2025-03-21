@@ -51,7 +51,7 @@ const handleSignUp = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: "User sign up successfully",
+      message: "Sign up successfully",
       data,
     });
   } catch (err) {

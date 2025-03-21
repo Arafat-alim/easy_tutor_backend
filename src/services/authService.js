@@ -24,6 +24,9 @@ const {
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const enabledEmailOTP = process.env.ENABLED_OTP_EMAIL || "true";
+const access_token_expiresIn = process.env.JWT_ACCESS_TOKEN_EXPIRES_IN || "1hr";
+const refresh_token_expiresIn =
+  process.env.JWT_REFRESH_TOKEN_EXPIRES_IN || "7d";
 
 const signUpUser = async (userData) => {
   let error;
@@ -112,6 +115,13 @@ const signInUser = async (userData) => {
       throw error;
     }
 
+    const matched = await doHashValidation(password, user.password);
+    if (!matched) {
+      error = new Error("Wrong Credentials, password is incorrect");
+      error.status = 400;
+      throw error;
+    }
+
     if (!user.email_verified || !user.mobile_verified) {
       let message = "Please verify";
       if (!user.email_verified) {
@@ -126,15 +136,11 @@ const signInUser = async (userData) => {
       throw error;
     }
 
-    const matched = await doHashValidation(password, user.password);
-    if (!matched) {
-      error = new Error("Wrong Credentials, password is incorrect");
-      error.status = 400;
-      throw error;
-    }
-
     const payload = {
       user_id: user.id,
+      role: user.role,
+      email: user.email,
+      is_blocked: user.is_blocked,
     };
 
     //! Return token and sanitized user profile
@@ -148,8 +154,11 @@ const signInUser = async (userData) => {
       email_verified: user.email_verified,
     };
 
-    const accessToken = await generateJWTToken(payload, "15m");
-    const refreshToken = await generateJWTToken(payload, "7d");
+    const accessToken = await generateJWTToken(payload, access_token_expiresIn);
+    const refreshToken = await generateJWTToken(
+      payload,
+      refresh_token_expiresIn
+    );
 
     //  saee refresh token to "token" table
     const expiresAt = generateTokenExpirationDate();

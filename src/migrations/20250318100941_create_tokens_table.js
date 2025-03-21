@@ -11,7 +11,7 @@ exports.up = function (knex) {
       .inTable("users")
       .onDelete("CASCADE")
       .notNullable();
-    table.string("refresh_token").notNullable();
+    table.text("refresh_token").notNullable();
     table.timestamp("expires_at").notNullable();
   });
 };
